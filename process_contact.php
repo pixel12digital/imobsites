@@ -1,5 +1,5 @@
 <?php
-// Processamento de formulário de contato - JTR Imóveis
+// Processamento de formulário de contato - imobsites
 require_once 'config/paths.php';
 require_once 'config/database.php';
 require_once 'config/config.php';
@@ -112,7 +112,7 @@ function enviarEmailNotificacao($nome, $email, $telefone, $assunto, $mensagem, $
     $corpo = "
     <html>
     <head>
-        <title>Novo Contato - JTR Imóveis</title>
+        <title>Novo Contato - imobsites</title>
     </head>
     <body>
         <h2>Novo contato recebido via site</h2>

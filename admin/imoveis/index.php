@@ -171,7 +171,7 @@ $cidades = fetchAll("SELECT DISTINCT cidade FROM localizacoes WHERE tenant_id = 
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
             <a class="navbar-brand" href="../index.php">
-                <i class="fas fa-home me-2"></i>JTR Imóveis - Admin
+                <i class="fas fa-home me-2"></i>imobsites - Admin
             </a>
             
             <div class="navbar-nav ms-auto">

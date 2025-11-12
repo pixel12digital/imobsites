@@ -1,4 +1,4 @@
-// JTR Imóveis - Main JavaScript File
+// imobsites - Main JavaScript File
 
 document.addEventListener('DOMContentLoaded', function() {
     

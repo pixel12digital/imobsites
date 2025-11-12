@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS tenant_settings (
     id INT AUTO_INCREMENT PRIMARY KEY,
     tenant_id INT NOT NULL,
     logo_path VARCHAR(255) DEFAULT NULL,
-    site_name VARCHAR(150) DEFAULT 'JTR Imóveis',
+    site_name VARCHAR(150) DEFAULT 'imobsites',
     site_email VARCHAR(150) DEFAULT NULL,
     primary_color VARCHAR(7) DEFAULT '#023A8D',
     secondary_color VARCHAR(7) DEFAULT '#F7931E',

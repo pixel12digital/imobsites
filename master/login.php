@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <style>
         body {
-            background: linear-gradient(135deg, #0a1429 0%, #14274e 100%);
+            background: linear-gradient(135deg, #1C3B5A 0%, #1E232B 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -53,12 +53,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             width: 100%;
             max-width: 420px;
         }
+        .login-logo {
+            height: 48px;
+            width: auto;
+        }
+        .btn-primary {
+            background: #F7931E;
+            border-color: #F7931E;
+            color: #1E232B;
+            font-weight: 600;
+        }
+        .btn-primary:hover {
+            background: #ff9f35;
+            border-color: #ff9f35;
+            color: #1E232B;
+        }
+        .form-control:focus {
+            border-color: #1C3B5A;
+            box-shadow: 0 0 0 0.2rem rgba(28, 59, 90, 0.25);
+        }
+        .text-muted {
+            color: #5A6473 !important;
+        }
     </style>
 </head>
 <body>
     <div class="login-card">
         <div class="text-center mb-4">
-            <i class="fas fa-layer-group fa-3x text-primary mb-3"></i>
+            <img src="../assets/logo-imob.png" alt="Imobsites" class="login-logo mb-3">
             <h1 class="h4 mb-0"><?php echo MASTER_PANEL_NAME; ?></h1>
             <p class="text-muted small">Acesso restrito aos administradores da plataforma</p>
         </div>
@@ -83,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </button>
             </div>
         </form>
-        <p class="text-center text-muted small mt-4 mb-0">&copy; <?php echo date('Y'); ?> JTR Platform. Todos os direitos reservados.</p>
+        <p class="text-center text-muted small mt-4 mb-0">&copy; <?php echo date('Y'); ?> Imobsites. Todos os direitos reservados.</p>
     </div>
 </body>
 </html>

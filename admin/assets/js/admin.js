@@ -1,11 +1,11 @@
-/**
- * JTR Imóveis - Painel Administrativo
+﻿/**
+ * Imob ImÃ³veis - Painel Administrativo
  * JavaScript principal para funcionalidades do admin
  */
 
 document.addEventListener('DOMContentLoaded', function() {
     
-    // ===== INICIALIZAÇÃO =====
+    // ===== INICIALIZAÃ‡ÃƒO =====
     initializeAdmin();
     
     // ===== EVENT LISTENERS =====
@@ -14,22 +14,22 @@ document.addEventListener('DOMContentLoaded', function() {
     // ===== FUNCIONALIDADES RESPONSIVAS =====
     setupResponsiveFeatures();
     
-    // ===== CONFIRMAÇÕES E ALERTAS =====
+    // ===== CONFIRMAÃ‡Ã•ES E ALERTAS =====
     setupConfirmations();
     
     // ===== TOOLTIPS E POPOVERS =====
     setupTooltips();
     
-    // ===== VALIDAÇÕES DE FORMULÁRIO =====
+    // ===== VALIDAÃ‡Ã•ES DE FORMULÃRIO =====
 setupFormValidations();
 
-// ===== FORMATAÇÃO DE PREÇOS =====
+// ===== FORMATAÃ‡ÃƒO DE PREÃ‡OS =====
 setupPriceFormatting();
     
     // ===== UPLOAD DE ARQUIVOS =====
     setupFileUploads();
     
-    // ===== NOTIFICAÇÕES =====
+    // ===== NOTIFICAÃ‡Ã•ES =====
     setupNotifications();
     
     // ===== DASHBOARD CHARTS =====
@@ -37,18 +37,18 @@ setupPriceFormatting();
 });
 
 /**
- * Inicialização principal do painel admin
+ * InicializaÃ§Ã£o principal do painel admin
  */
 function initializeAdmin() {
-    console.log('JTR Imóveis Admin - Inicializando...');
+    console.log('Imob ImÃ³veis Admin - Inicializando...');
     
-    // Verificar se há mensagens de sucesso/erro para mostrar
+    // Verificar se hÃ¡ mensagens de sucesso/erro para mostrar
     showStoredMessages();
     
     // Inicializar componentes Bootstrap
     initializeBootstrapComponents();
     
-    // Configurar tema escuro/claro se disponível
+    // Configurar tema escuro/claro se disponÃ­vel
     setupThemeToggle();
     
     // Inicializar sidebar mobile
@@ -91,13 +91,13 @@ function setupEventListeners() {
         filter.addEventListener('change', handleStatusFilter);
     });
     
-    // Paginação
+    // PaginaÃ§Ã£o
     const paginationLinks = document.querySelectorAll('.pagination .page-link');
     paginationLinks.forEach(link => {
         link.addEventListener('click', handlePagination);
     });
     
-    // Botões de ação
+    // BotÃµes de aÃ§Ã£o
     const actionButtons = document.querySelectorAll('.action-btn');
     actionButtons.forEach(btn => {
         btn.addEventListener('click', handleActionButton);
@@ -140,7 +140,7 @@ function initializeMobileSidebar() {
     
     if (!sidebar || !sidebarToggle) return;
     
-    // Criar botão toggle se não existir
+    // Criar botÃ£o toggle se nÃ£o existir
     if (!document.querySelector('.sidebar-toggle')) {
         const toggleBtn = document.createElement('button');
         toggleBtn.className = 'btn btn-primary d-md-none sidebar-toggle';
@@ -164,15 +164,15 @@ function toggleMobileSidebar() {
 }
 
 /**
- * Configurar confirmações
+ * Configurar confirmaÃ§Ãµes
  */
 function setupConfirmations() {
     
-    // Confirmação para exclusões
+    // ConfirmaÃ§Ã£o para exclusÃµes
     const deleteButtons = document.querySelectorAll('.btn-delete, .btn-excluir');
     deleteButtons.forEach(btn => {
         btn.addEventListener('click', function(e) {
-            if (!confirm('Tem certeza que deseja excluir este item? Esta ação não pode ser desfeita.')) {
+            if (!confirm('Tem certeza que deseja excluir este item? Esta aÃ§Ã£o nÃ£o pode ser desfeita.')) {
                 e.preventDefault();
                 return false;
             }
@@ -182,7 +182,7 @@ function setupConfirmations() {
         });
     });
     
-    // Confirmação para alterações de status
+    // ConfirmaÃ§Ã£o para alteraÃ§Ãµes de status
     const statusButtons = document.querySelectorAll('.btn-status');
     statusButtons.forEach(btn => {
         btn.addEventListener('click', function(e) {
@@ -215,7 +215,7 @@ function setupTooltips() {
 }
 
 /**
- * Configurar validações de formulário
+ * Configurar validaÃ§Ãµes de formulÃ¡rio
  */
 function setupFormValidations() {
     
@@ -231,7 +231,7 @@ function setupFormValidations() {
         });
     });
     
-    // Validação de campos específicos
+    // ValidaÃ§Ã£o de campos especÃ­ficos
     const requiredFields = document.querySelectorAll('[required]');
     requiredFields.forEach(field => {
         field.addEventListener('blur', validateField);
@@ -247,11 +247,11 @@ function validateField(e) {
     const value = field.value.trim();
     
     if (field.hasAttribute('required') && !value) {
-        showFieldError(field, 'Este campo é obrigatório');
+        showFieldError(field, 'Este campo Ã© obrigatÃ³rio');
     } else if (field.type === 'email' && value && !isValidEmail(value)) {
-        showFieldError(field, 'Email inválido');
+        showFieldError(field, 'Email invÃ¡lido');
     } else if (field.type === 'tel' && value && !isValidPhone(value)) {
-        showFieldError(field, 'Telefone inválido');
+        showFieldError(field, 'Telefone invÃ¡lido');
     } else {
         clearFieldError(field);
     }
@@ -307,7 +307,7 @@ function setupFileUploads() {
         zone.addEventListener('dragleave', handleDragLeave);
     });
     
-    console.log('DEBUG: setupFileUploads concluído');
+    console.log('DEBUG: setupFileUploads concluÃ­do');
 }
 
 /**
@@ -326,13 +326,13 @@ function handleFileUpload(e) {
     // Buscar o preview de forma mais robusta
     let preview = input.parentNode.querySelector('.file-preview');
     
-    // Se não encontrar no parent, buscar em todo o documento
+    // Se nÃ£o encontrar no parent, buscar em todo o documento
     if (!preview) {
         preview = document.querySelector('.file-preview');
         console.log('DEBUG: Preview encontrado no documento:', preview);
     }
     
-    // Se ainda não encontrar, criar o preview
+    // Se ainda nÃ£o encontrar, criar o preview
     if (!preview) {
         console.log('DEBUG: Criando preview dinamicamente');
         preview = document.createElement('div');
@@ -355,15 +355,15 @@ function handleFileUpload(e) {
             
             // Validar tipo de arquivo
             if (!isValidFileType(file)) {
-                console.log('DEBUG: Arquivo inválido:', file.name);
-                showNotification(`Tipo de arquivo não suportado: ${file.name}`, 'error');
+                console.log('DEBUG: Arquivo invÃ¡lido:', file.name);
+                showNotification(`Tipo de arquivo nÃ£o suportado: ${file.name}`, 'error');
                 return;
             }
             
             // Validar tamanho
             if (file.size > 5 * 1024 * 1024) { // 5MB
                 console.log('DEBUG: Arquivo muito grande:', file.name);
-                showNotification(`Arquivo muito grande: ${file.name}. Máximo 5MB`, 'error');
+                showNotification(`Arquivo muito grande: ${file.name}. MÃ¡ximo 5MB`, 'error');
                 return;
             }
             
@@ -398,7 +398,7 @@ function handleFileUpload(e) {
                 
                 reader.readAsDataURL(file);
             } else {
-                console.log('DEBUG: Não é imagem ou preview não encontrado:', file.type, preview);
+                console.log('DEBUG: NÃ£o Ã© imagem ou preview nÃ£o encontrado:', file.type, preview);
             }
         });
         
@@ -407,11 +407,11 @@ function handleFileUpload(e) {
 }
 
 /**
- * Configurar notificações
+ * Configurar notificaÃ§Ãµes
  */
 function setupNotifications() {
     
-    // Criar container de notificações se não existir
+    // Criar container de notificaÃ§Ãµes se nÃ£o existir
     if (!document.querySelector('.notifications-container')) {
         const container = document.createElement('div');
         container.className = 'notifications-container';
@@ -427,7 +427,7 @@ function setupNotifications() {
 }
 
 /**
- * Mostrar notificação
+ * Mostrar notificaÃ§Ã£o
  */
 function showNotification(message, type = 'info', duration = 5000) {
     const container = document.querySelector('.notifications-container');
@@ -442,7 +442,7 @@ function showNotification(message, type = 'info', duration = 5000) {
     
     container.appendChild(notification);
     
-    // Auto-remover após duração
+    // Auto-remover apÃ³s duraÃ§Ã£o
     setTimeout(() => {
         if (notification.parentNode) {
             notification.remove();
@@ -456,11 +456,11 @@ function showNotification(message, type = 'info', duration = 5000) {
 }
 
 /**
- * Configurar gráficos do dashboard
+ * Configurar grÃ¡ficos do dashboard
  */
 function setupDashboardCharts() {
     
-    // Verificar se Chart.js está disponível
+    // Verificar se Chart.js estÃ¡ disponÃ­vel
     if (typeof Chart !== 'undefined') {
         setupImoveisChart();
         setupContatosChart();
@@ -468,7 +468,7 @@ function setupDashboardCharts() {
 }
 
 /**
- * Configurar gráfico de imóveis
+ * Configurar grÃ¡fico de imÃ³veis
  */
 function setupImoveisChart() {
     const ctx = document.getElementById('imoveisChart');
@@ -477,7 +477,7 @@ function setupImoveisChart() {
     new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['Disponível', 'Vendido', 'Alugado', 'Reservado'],
+            labels: ['DisponÃ­vel', 'Vendido', 'Alugado', 'Reservado'],
             datasets: [{
                 data: [12, 19, 3, 5],
                 backgroundColor: [
@@ -501,7 +501,7 @@ function setupImoveisChart() {
 }
 
 /**
- * Configurar gráfico de contatos
+ * Configurar grÃ¡fico de contatos
  */
 function setupContatosChart() {
     const ctx = document.getElementById('contatosChart');
@@ -535,7 +535,7 @@ function setupContatosChart() {
  * Mostrar mensagens armazenadas
  */
 function showStoredMessages() {
-    // Verificar mensagens na sessão (PHP)
+    // Verificar mensagens na sessÃ£o (PHP)
     const successMessage = document.querySelector('.alert-success');
     const errorMessage = document.querySelector('.alert-danger');
     
@@ -611,7 +611,7 @@ function showLoading(element) {
     element.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Carregando...';
     element.disabled = true;
     
-    // Restaurar após 3 segundos (ou quando a operação terminar)
+    // Restaurar apÃ³s 3 segundos (ou quando a operaÃ§Ã£o terminar)
     setTimeout(() => {
         element.innerHTML = originalText;
         element.disabled = false;
@@ -634,7 +634,7 @@ function debounce(func, wait) {
 }
 
 /**
- * Handlers para eventos específicos
+ * Handlers para eventos especÃ­ficos
  */
 function handleSearch(e) {
     const searchTerm = e.target.value;
@@ -668,11 +668,11 @@ function handleActionButton(e) {
     const action = e.target.dataset.action;
     const itemId = e.target.dataset.itemId;
     
-    console.log('Ação:', action, 'Item:', itemId);
+    console.log('AÃ§Ã£o:', action, 'Item:', itemId);
 }
 
 /**
- * Funções utilitárias
+ * FunÃ§Ãµes utilitÃ¡rias
  */
 function isValidEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -691,7 +691,7 @@ function isValidFileType(file) {
         return true;
     }
     
-    // Verificar extensão como fallback
+    // Verificar extensÃ£o como fallback
     const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
     const fileName = file.name.toLowerCase();
     const extension = fileName.split('.').pop();
@@ -757,7 +757,7 @@ function removeFile(button, index) {
 }
 
 /**
- * Configurar formatação de preços no padrão brasileiro
+ * Configurar formataÃ§Ã£o de preÃ§os no padrÃ£o brasileiro
  */
 function setupPriceFormatting() {
     const priceInputs = document.querySelectorAll('input[name="preco"], input[id="preco"]');
@@ -777,36 +777,36 @@ function setupPriceFormatting() {
         
         // Formatar ao digitar em tempo real (mais suave)
         input.addEventListener('input', function() {
-            // Obter o valor atual e a posição do cursor
+            // Obter o valor atual e a posiÃ§Ã£o do cursor
             let currentValue = this.value;
             let cursorPosition = this.selectionStart;
             
-            // Se o usuário está digitando no meio do campo, não formatar
+            // Se o usuÃ¡rio estÃ¡ digitando no meio do campo, nÃ£o formatar
             if (cursorPosition < currentValue.length) {
                 return;
             }
             
-            // Remover tudo exceto números
+            // Remover tudo exceto nÃºmeros
             let cleanValue = currentValue.replace(/[^\d]/g, '');
             
-            // Se não há valor, não fazer nada
+            // Se nÃ£o hÃ¡ valor, nÃ£o fazer nada
             if (!cleanValue) {
                 return;
             }
             
-            // Formatar em tempo real apenas se o usuário está no final
+            // Formatar em tempo real apenas se o usuÃ¡rio estÃ¡ no final
             let formattedValue = formatPriceRealTime(cleanValue);
             
-            // Atualizar o campo apenas se o valor mudou e o cursor está no final
+            // Atualizar o campo apenas se o valor mudou e o cursor estÃ¡ no final
             if (formattedValue !== currentValue && cursorPosition === currentValue.length) {
                 this.value = formattedValue;
                 
-                // Manter o cursor no final após formatação
+                // Manter o cursor no final apÃ³s formataÃ§Ã£o
                 this.setSelectionRange(formattedValue.length, formattedValue.length);
             }
         });
         
-        // Formatar ao ganhar o foco (remover formatação para edição)
+        // Formatar ao ganhar o foco (remover formataÃ§Ã£o para ediÃ§Ã£o)
         input.addEventListener('focus', function() {
             if (this.value) {
                 this.value = this.value.replace(/\./g, '').replace(',', '.');
@@ -816,47 +816,47 @@ function setupPriceFormatting() {
 }
 
 /**
- * Formatar preço em tempo real durante a digitação (versão suave)
- * @param {string} value - Valor numérico limpo
+ * Formatar preÃ§o em tempo real durante a digitaÃ§Ã£o (versÃ£o suave)
+ * @param {string} value - Valor numÃ©rico limpo
  * @returns {string} - Valor formatado em tempo real
  */
 function formatPriceRealTime(value) {
-    // Se não há valor, retornar vazio
+    // Se nÃ£o hÃ¡ valor, retornar vazio
     if (!value) {
         return '';
     }
     
-    // Converter para string e garantir que seja apenas números
+    // Converter para string e garantir que seja apenas nÃºmeros
     let cleanValue = String(value).replace(/[^\d]/g, '');
     
-    // Se não há números, retornar vazio
+    // Se nÃ£o hÃ¡ nÃºmeros, retornar vazio
     if (!cleanValue) {
         return '';
     }
     
-    // Formatar em tempo real (versão mais suave)
+    // Formatar em tempo real (versÃ£o mais suave)
     let formattedValue = '';
     
-    // Para valores pequenos (1-2 dígitos), não adicionar formatação
+    // Para valores pequenos (1-2 dÃ­gitos), nÃ£o adicionar formataÃ§Ã£o
     if (cleanValue.length <= 2) {
         return cleanValue;
     }
     
-    // Para valores médios (3-5 dígitos), adicionar apenas vírgula
+    // Para valores mÃ©dios (3-5 dÃ­gitos), adicionar apenas vÃ­rgula
     if (cleanValue.length <= 5) {
         formattedValue = cleanValue.slice(0, -2) + ',' + cleanValue.slice(-2);
         return formattedValue;
     }
     
-    // Para valores grandes (6+ dígitos), adicionar pontos e vírgula
+    // Para valores grandes (6+ dÃ­gitos), adicionar pontos e vÃ­rgula
     let tempValue = cleanValue;
     
-    // Adicionar vírgula para decimais
+    // Adicionar vÃ­rgula para decimais
     if (tempValue.length > 2) {
         tempValue = tempValue.slice(0, -2) + ',' + tempValue.slice(-2);
     }
     
-    // Adicionar pontos para milhares (apenas se necessário)
+    // Adicionar pontos para milhares (apenas se necessÃ¡rio)
     if (tempValue.length > 6) { // Mais de 999,99
         let parts = tempValue.split(',');
         let integerPart = parts[0];
@@ -880,25 +880,25 @@ function formatPriceRealTime(value) {
 }
 
 /**
- * Formatar preço para exibição no input (padrão brasileiro)
+ * Formatar preÃ§o para exibiÃ§Ã£o no input (padrÃ£o brasileiro)
  * @param {string|number} value - Valor a ser formatado
  * @returns {string} - Valor formatado
  */
 function formatPriceForInput(value) {
-    // Converter para string e remover formatação existente
+    // Converter para string e remover formataÃ§Ã£o existente
     let cleanValue = String(value).replace(/[^\d,]/g, '');
     
-    // Substituir vírgula por ponto para cálculos
+    // Substituir vÃ­rgula por ponto para cÃ¡lculos
     cleanValue = cleanValue.replace(',', '.');
     
-    // Converter para número
+    // Converter para nÃºmero
     let number = parseFloat(cleanValue);
     
     if (isNaN(number)) {
         return '';
     }
     
-    // Formatar para o padrão brasileiro (pontos para milhares, vírgula para decimais)
+    // Formatar para o padrÃ£o brasileiro (pontos para milhares, vÃ­rgula para decimais)
     return number.toLocaleString('pt-BR', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
@@ -906,17 +906,17 @@ function formatPriceForInput(value) {
 }
 
 /**
- * Converter preço formatado para número (para envio do formulário)
- * @param {string} formattedPrice - Preço formatado
- * @returns {number} - Número para envio
+ * Converter preÃ§o formatado para nÃºmero (para envio do formulÃ¡rio)
+ * @param {string} formattedPrice - PreÃ§o formatado
+ * @returns {number} - NÃºmero para envio
  */
 function convertFormattedPriceToNumber(formattedPrice) {
-    // Remover pontos e substituir vírgula por ponto
+    // Remover pontos e substituir vÃ­rgula por ponto
     const cleanValue = formattedPrice.replace(/\./g, '').replace(',', '.');
     return parseFloat(cleanValue) || 0;
 }
 
-// ===== EXPORTAR FUNÇÕES PARA USO GLOBAL =====
+// ===== EXPORTAR FUNÃ‡Ã•ES PARA USO GLOBAL =====
 window.AdminPanel = {
     showNotification,
     showLoading,

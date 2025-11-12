@@ -1,18 +1,18 @@
 /* ===== ADMIN PANEL STYLES ===== */
 
 :root {
-    --primary-color: #1D4C34;
-    --secondary-color: #2d5a3f;
+    --primary-color: #1C3B5A;
+    --secondary-color: #F7931E;
     --success-color: #27ae60;
     --info-color: #3498db;
     --warning-color: #f39c12;
     --danger-color: #e74c3c;
-    --light-color: #f8f9fa;
-    --dark-color: #1D4C34;
-    --accent-color: #4a7c59;
-    --text-color: #1D4C34;
-    --border-color: #c8d5cc;
-    --logo-green: #1D4C34;
+    --light-color: #F5F7FA;
+    --dark-color: #1E232B;
+    --accent-color: #5A6473;
+    --text-color: #5A6473;
+    --border-color: #D2D8E1;
+    --logo-green: #1C3B5A;
     --sidebar-width: 250px;
 }
 
@@ -24,7 +24,7 @@ body {
 
 /* ===== NAVBAR ===== */
 .navbar-dark.bg-primary {
-    background: linear-gradient(135deg, var(--logo-green) 0%, var(--secondary-color) 100%) !important;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--dark-color) 100%) !important;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
@@ -36,8 +36,8 @@ body {
 /* ===== SIDEBAR ===== */
 .sidebar {
     min-height: calc(100vh - 56px);
-    box-shadow: 0 0.15rem 1.75rem 0 rgba(29, 76, 52, 0.15);
-    background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(28, 59, 90, 0.12);
+    background: linear-gradient(180deg, #ffffff 0%, #F5F7FA 100%);
     border-right: 1px solid var(--border-color);
 }
 
@@ -49,22 +49,22 @@ body {
     margin: 0.2rem 0.5rem;
     transition: all 0.2s ease;
     background-color: rgba(255, 255, 255, 0.8);
-    border: 1px solid rgba(29, 76, 52, 0.1);
+    border: 1px solid rgba(28, 59, 90, 0.1);
 }
 
 .sidebar .nav-link:hover {
     color: var(--primary-color);
-    background-color: rgba(29, 76, 52, 0.1);
+    background-color: rgba(28, 59, 90, 0.12);
     transform: translateX(5px);
-    border-color: rgba(29, 76, 52, 0.3);
-    box-shadow: 0 2px 4px rgba(29, 76, 52, 0.1);
+    border-color: rgba(28, 59, 90, 0.2);
+    box-shadow: 0 2px 4px rgba(28, 59, 90, 0.1);
 }
 
 .sidebar .nav-link.active {
     color: #ffffff !important;
     background-color: var(--primary-color) !important;
     border-left: 4px solid #ffffff;
-    box-shadow: 0 2px 8px rgba(29, 76, 52, 0.3);
+    box-shadow: 0 2px 8px rgba(28, 59, 90, 0.2);
     border-color: var(--primary-color);
 }
 
@@ -135,13 +135,13 @@ main {
 .card {
     border: none;
     border-radius: 0.75rem;
-    box-shadow: 0 0.15rem 1.75rem 0 rgba(29, 76, 52, 0.15);
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(28, 59, 90, 0.12);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 0.5rem 2rem 0 rgba(29, 76, 52, 0.2);
+    box-shadow: 0 0.5rem 2rem 0 rgba(28, 59, 90, 0.18);
 }
 
 .card-header {
@@ -189,13 +189,14 @@ main {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    background: linear-gradient(135deg, var(--secondary-color) 0%, #ff9f35 100%);
     border: none;
+    color: #1E232B;
 }
 
 .btn-primary:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(29, 76, 52, 0.3);
+    box-shadow: 0 4px 8px rgba(28, 59, 90, 0.2);
 }
 
 .btn-outline-primary {
@@ -213,7 +214,7 @@ main {
     background-color: #fff;
     border-radius: 0.75rem;
     overflow: hidden;
-    box-shadow: 0 0.15rem 1.75rem 0 rgba(29, 76, 52, 0.15);
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(28, 59, 90, 0.12);
     width: 100%;
     table-layout: auto;
 }
@@ -523,7 +524,7 @@ main {
 }
 
 .table tbody tr:hover {
-    background-color: rgba(29, 76, 52, 0.05);
+    background-color: rgba(28, 59, 90, 0.06);
 }
 
 /* ===== FORMS ===== */
@@ -536,7 +537,7 @@ main {
 
 .form-control:focus, .form-select:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.2rem rgba(29, 76, 52, 0.25);
+    box-shadow: 0 0 0 0.2rem rgba(28, 59, 90, 0.2);
 }
 
 .input-group-text {
@@ -690,7 +691,7 @@ main {
 .modal-content {
     border: none;
     border-radius: 0.75rem;
-    box-shadow: 0 0.5rem 2rem 0 rgba(29, 76, 52, 0.3);
+    box-shadow: 0 0.5rem 2rem 0 rgba(28, 59, 90, 0.2);
 }
 
 .modal-header {
@@ -707,7 +708,7 @@ main {
 .dropdown-menu {
     border: none;
     border-radius: 0.75rem;
-    box-shadow: 0 0.5rem 2rem 0 rgba(29, 76, 52, 0.2);
+    box-shadow: 0 0.5rem 2rem 0 rgba(28, 59, 90, 0.18);
     padding: 0.5rem 0;
 }
 
@@ -717,7 +718,7 @@ main {
 }
 
 .dropdown-item:hover {
-    background-color: rgba(29, 76, 52, 0.1);
+    background-color: rgba(28, 59, 90, 0.12);
     color: var(--primary-color);
 }
 
@@ -744,12 +745,12 @@ main {
 
 .drop-zone:hover {
     border-color: var(--primary-color) !important;
-    background-color: rgba(29, 76, 52, 0.05);
+    background-color: rgba(28, 59, 90, 0.06);
 }
 
 .drop-zone.drag-over {
     border-color: var(--primary-color) !important;
-    background-color: rgba(29, 76, 52, 0.1);
+    background-color: rgba(28, 59, 90, 0.12);
     transform: scale(1.02);
 }
 
@@ -858,7 +859,7 @@ main {
 
 .foto-item.drag-over {
     border: 2px dashed var(--primary-color);
-    background-color: rgba(29, 76, 52, 0.1);
+    background-color: rgba(28, 59, 90, 0.12);
 }
 
 .foto-card {
@@ -931,7 +932,7 @@ main {
 /* Estilos para foto principal */
 .foto-item[data-ordem="1"] .foto-card {
     border: 2px solid var(--primary-color);
-    box-shadow: 0 4px 16px rgba(29, 76, 52, 0.2);
+    box-shadow: 0 4px 16px rgba(28, 59, 90, 0.2);
 }
 
 .foto-item[data-ordem="1"] .ordem-badge {

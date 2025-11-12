@@ -7,7 +7,7 @@ define('DB_USER', 'imobsitescom_imobsites');
 define('DB_PASS', 'Los@ngo#081081');
 
 // Log para debug
-error_log('[JTR Imóveis] Usando banco LOCAL - Host: ' . DB_HOST . ' - Database: ' . DB_NAME);
+error_log('[imobsites] Usando banco LOCAL - Host: ' . DB_HOST . ' - Database: ' . DB_NAME);
 
 try {
     // Conexão com timeout otimizado para conexões remotas
@@ -23,11 +23,11 @@ try {
     // Tornar a variável $pdo global
     global $pdo;
     
-    error_log('[JTR Imóveis] Conexão com banco LOCAL estabelecida com sucesso');
+    error_log('[imobsites] Conexão com banco LOCAL estabelecida com sucesso');
 
 } catch(PDOException $e) {
     $error_msg = "Erro na conexão com o banco LOCAL: " . $e->getMessage();
-    error_log('[JTR Imóveis] ' . $error_msg);
+    error_log('[imobsites] ' . $error_msg);
 
     // Em caso de erro, mostrar mensagem detalhada para debug
     die("Erro crítico: " . $error_msg . "<br><br>

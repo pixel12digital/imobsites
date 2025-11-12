@@ -7,6 +7,8 @@ if (!function_exists('query')) {
     throw new Exception('Database functions must be loaded before tenant detection.');
 }
 
+require_once __DIR__ . '/master.php';
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -23,12 +25,20 @@ function detectCurrentDomain(): string {
 }
 
 $overrideTenantId = $_SESSION['tenant_override_id'] ?? null;
+$currentDomain = detectCurrentDomain();
+
+if (!$overrideTenantId && function_exists('isMasterDomain') && isMasterDomain($currentDomain)) {
+    if (php_sapi_name() !== 'cli') {
+        header('Location: /master/login.php');
+        exit;
+    }
+
+    throw new Exception('Master domain accessed without override in CLI context.');
+}
 
 if ($overrideTenantId) {
     $tenant = fetch("SELECT * FROM tenants WHERE id = ? AND status = 'active'", [$overrideTenantId]);
 } else {
-    $currentDomain = detectCurrentDomain();
-
     $tenant = fetch("
         SELECT t.*
         FROM tenant_domains td

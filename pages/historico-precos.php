@@ -1,5 +1,5 @@
 <?php
-// Página de Histórico de Preços - JTR Imóveis
+// Página de Histórico de Preços - imobsites
 ?>
 
 <?php

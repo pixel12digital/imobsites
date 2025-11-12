@@ -88,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Painel Administrativo JTR Imóveis</title>
+    <title>Login - Painel Administrativo imobsites</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -99,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     <style>
         body {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            background: linear-gradient(135deg, #F5F7FA 0%, #E6ECF5 100%);
             min-height: 100vh;
         }
         
@@ -111,13 +111,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         .login-card {
             border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(29, 76, 52, 0.15);
+            box-shadow: 0 20px 40px rgba(28, 59, 90, 0.15);
             overflow: hidden;
             border: none;
         }
         
         .login-left {
-            background: linear-gradient(135deg, #1D4C34 0%, #2d5a3f 100%);
+            background: linear-gradient(135deg, #1C3B5A 0%, #1E232B 100%);
             position: relative;
             overflow: hidden;
         }
@@ -141,11 +141,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             color: white;
         }
         
+        .login-brand img {
+            height: 54px;
+            width: auto;
+            margin-bottom: 1.5rem;
+        }
+        
         .login-brand h1 {
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             font-weight: 700;
-            margin-bottom: 1rem;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 0.75rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.25);
         }
         
         .login-brand p {
@@ -165,13 +171,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         .form-title h2 {
-            color: #1D4C34;
+            color: #1C3B5A;
             font-weight: 700;
             margin-bottom: 0.5rem;
         }
         
         .form-title p {
-            color: #6c757d;
+            color: #5A6473;
             margin-bottom: 0;
         }
         
@@ -182,19 +188,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .input-group {
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 2px 8px rgba(29, 76, 52, 0.1);
+            box-shadow: 0 2px 8px rgba(28, 59, 90, 0.12);
             transition: all 0.3s ease;
         }
         
         .input-group:focus-within {
-            box-shadow: 0 4px 16px rgba(29, 76, 52, 0.2);
+            box-shadow: 0 4px 16px rgba(28, 59, 90, 0.25);
             transform: translateY(-2px);
         }
         
         .input-group-text {
             background: #f8f9fa;
             border: none;
-            color: #1D4C34;
+            color: #1C3B5A;
             font-size: 1.1rem;
             padding: 0.75rem 1rem;
         }
@@ -212,35 +218,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         .btn-login {
-            background: linear-gradient(135deg, #1D4C34 0%, #2d5a3f 100%);
+            background: #F7931E;
             border: none;
             border-radius: 12px;
             padding: 0.75rem 2rem;
             font-weight: 600;
             font-size: 1.1rem;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(29, 76, 52, 0.3);
+            color: #1E232B;
+            box-shadow: 0 4px 12px rgba(28, 59, 90, 0.2);
         }
         
         .btn-login:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(29, 76, 52, 0.4);
+            box-shadow: 0 8px 20px rgba(28, 59, 90, 0.25);
+            background: #ff9f35;
+            color: #1E232B;
         }
         
         .back-link {
-            color: #1D4C34;
+            color: #1C3B5A;
             text-decoration: none;
             font-weight: 500;
             transition: all 0.3s ease;
         }
         
         .back-link:hover {
-            color: #2d5a3f;
+            color: #F7931E;
             transform: translateX(-5px);
         }
         
         .info-text {
-            color: #6c757d;
+            color: #5A6473;
             font-size: 0.9rem;
         }
         
@@ -274,8 +283,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="row g-0">
                             <div class="col-lg-6 login-left">
                                 <div class="login-brand">
-                                    <h1><i class="fas fa-home me-3"></i>JTR Imóveis</h1>
-                                    <p>Painel Administrativo</p>
+                                    <img src="../assets/logo-imob.png" alt="Imobsites">
+                                    <h1>Painel Imobsites</h1>
+                                    <p>Administre seus imóveis com eficiência</p>
                                 </div>
                             </div>
                             <div class="col-lg-6">

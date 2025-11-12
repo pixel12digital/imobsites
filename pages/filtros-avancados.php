@@ -1,5 +1,5 @@
 <?php
-// Página de Filtros Avançados - JTR Imóveis
+// Página de Filtros Avançados - imobsites
 
 // Página de Filtros Avançados por Características
 $page_title = 'Filtros Avançados - ' . SITE_NAME;

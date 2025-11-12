@@ -1,5 +1,5 @@
 <?php
-// Página de Contato - JTR Imóveis
+// Página de Contato - imobsites
 
 // Processar mensagens de sucesso/erro
 $mensagem_enviada = false;

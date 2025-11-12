@@ -1,17 +1,17 @@
 /* Variáveis CSS */
 :root {
-    --primary-color: #1D4C34;
-    --secondary-color: #2d5a3f;
+    --primary-color: #1C3B5A;
+    --secondary-color: #F7931E;
     --success-color: #27ae60;
     --danger-color: #e74c3c;
     --warning-color: #f39c12;
     --info-color: #3498db;
-    --light-color: #f8f9fa;
-    --dark-color: #1D4C34;
-    --accent-color: #4a7c59;
-    --text-color: #1D4C34;
-    --border-color: #c8d5cc;
-    --logo-green: #1D4C34;
+    --light-color: #F5F7FA;
+    --dark-color: #1E232B;
+    --accent-color: #5A6473;
+    --text-color: #5A6473;
+    --border-color: #D2D8E1;
+    --logo-green: #1C3B5A;
 }
 
 /* Reset e Base */
@@ -54,7 +54,7 @@ body {
     height: 50px;
     width: auto;
     max-width: 200px;
-    filter: drop-shadow(0 2px 4px rgba(29, 76, 52, 0.1));
+    filter: drop-shadow(0 2px 4px rgba(28, 59, 90, 0.12));
 }
 
 /* Top bar com cor do logo */
@@ -157,7 +157,7 @@ body {
 .thumbnail-item:hover {
     transform: translateY(-2px);
     border-color: var(--primary-color);
-    box-shadow: 0 4px 12px rgba(29, 76, 52, 0.2);
+    box-shadow: 0 4px 12px rgba(28, 59, 90, 0.2);
 }
 
 .thumbnail-img {
@@ -186,7 +186,7 @@ body {
     position: absolute;
     top: 5px;
     right: 5px;
-    background: rgba(29, 76, 52, 0.9);
+    background: rgba(28, 59, 90, 0.9);
     color: white;
     border-radius: 50%;
     width: 24px;
@@ -771,7 +771,7 @@ body {
 /* Form Styles */
 .form-control:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    box-shadow: 0 0 0 0.2rem rgba(28, 59, 90, 0.2);
 }
 
 .btn-primary {
@@ -780,8 +780,8 @@ body {
 }
 
 .btn-primary:hover {
-    background: #0056b3;
-    border-color: #0056b3;
+    background: #274b6d;
+    border-color: #274b6d;
 }
 
 /* Utility Classes */
@@ -818,7 +818,7 @@ body {
 .form-select:focus {
     outline: 2px solid var(--primary-color) !important;
     outline-offset: 2px !important;
-    box-shadow: 0 0 0 0.2rem rgba(29, 76, 52, 0.25) !important;
+    box-shadow: 0 0 0 0.2rem rgba(28, 59, 90, 0.2) !important;
 }
 
 /* Melhor contraste para links */
@@ -830,7 +830,7 @@ a:focus {
 
 /* Melhor contraste para botões de contato */
 .contact-item a:focus {
-    background-color: rgba(29, 76, 52, 0.1) !important;
+    background-color: rgba(28, 59, 90, 0.12) !important;
     padding: 0.25rem 0.5rem !important;
     border-radius: 4px !important;
     text-decoration: underline !important;
@@ -838,7 +838,7 @@ a:focus {
 
 /* Melhor contraste para cards de contato */
 .contact-numbers-highlight .card:focus-within {
-    box-shadow: 0 0 0 3px rgba(29, 76, 52, 0.3) !important;
+    box-shadow: 0 0 0 3px rgba(28, 59, 90, 0.2) !important;
     border-radius: 8px !important;
 }
 
@@ -846,7 +846,7 @@ a:focus {
 .whatsapp-cta .btn:focus {
     outline: 2px solid var(--primary-color) !important;
     outline-offset: 2px !important;
-    box-shadow: 0 0 0 0.2rem rgba(29, 76, 52, 0.25) !important;
+    box-shadow: 0 0 0 0.2rem rgba(28, 59, 90, 0.2) !important;
 }
 
 /* Melhor contraste para formulários */
@@ -858,7 +858,7 @@ a:focus {
 /* Melhor contraste para campos obrigatórios */
 .form-control[required]:focus {
     border-color: var(--primary-color) !important;
-    box-shadow: 0 0 0 0.2rem rgba(29, 76, 52, 0.25) !important;
+    box-shadow: 0 0 0 0.2rem rgba(28, 59, 90, 0.2) !important;
 }
 
 /* Melhor contraste para mensagens de erro */
@@ -1035,7 +1035,7 @@ a:focus {
 
 .thumbnail-item.active {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(29, 76, 52, 0.3);
+    box-shadow: 0 0 0 3px rgba(28, 59, 90, 0.2);
     transform: translateY(-2px);
 }
 

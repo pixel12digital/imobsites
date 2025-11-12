@@ -1,41 +1,41 @@
-<?php
+﻿<?php
 // Iniciar output buffering para evitar problemas com headers
 ob_start();
 
-// Carregar configurações ANTES de iniciar a sessão
+// Carregar configuraÃ§Ãµes ANTES de iniciar a sessÃ£o
 require_once '../../config/paths.php';
 require_once '../../config/database.php';
 require_once '../../config/tenant.php';
 require_once '../../config/config.php';
 
-// Agora iniciar a sessão
+// Agora iniciar a sessÃ£o
 session_start();
 
-// Verificar se o usuário está logado
+// Verificar se o usuÃ¡rio estÃ¡ logado
 if (!isset($_SESSION['admin_logged_in']) || !$_SESSION['admin_logged_in'] || !isset($_SESSION['tenant_id']) || (int)$_SESSION['tenant_id'] !== TENANT_ID) {
     header('Location: ../login.php');
     exit;
 }
 
-// Verificar se o usuário tem nível de administrador
+// Verificar se o usuÃ¡rio tem nÃ­vel de administrador
 if ($_SESSION['admin_nivel'] !== 'admin') {
     header('Location: ../index.php');
     exit;
 }
 
-// Processar exclusão
+// Processar exclusÃ£o
 if (isset($_POST['delete_contact']) && isset($_POST['contact_id'])) {
     $contact_id = (int)$_POST['contact_id'];
     
     $delete_stmt = query("DELETE FROM contatos WHERE id = ? AND tenant_id = ?", [$contact_id, TENANT_ID]);
     if ($delete_stmt && $delete_stmt->rowCount() > 0) {
-        $success = 'Contato excluído com sucesso.';
+        $success = 'Contato excluÃ­do com sucesso.';
     } else {
         $error = 'Erro ao excluir contato.';
     }
 }
 
-// Processar marcação como lido/não lido
+// Processar marcaÃ§Ã£o como lido/nÃ£o lido
 if (isset($_POST['toggle_status']) && isset($_POST['contact_id'])) {
     $contact_id = (int)$_POST['contact_id'];
     $current_status = $_POST['current_status'];
@@ -91,7 +91,7 @@ $total_contacts = $count_stmt->fetch()['total'];
 
 $total_pages = ceil($total_contacts / $per_page);
 
-// Buscar contatos com paginação
+// Buscar contatos com paginaÃ§Ã£o
 $sql = "SELECT id, nome, email, telefone, assunto, tipo_operacao, mensagem, status, data_envio FROM contatos " . $where_clause . " ORDER BY data_envio DESC LIMIT ? OFFSET ?";
 $params[] = $per_page;
 $params[] = $offset;
@@ -100,7 +100,7 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $contatos = $stmt->fetchAll();
 
-// Estatísticas
+// EstatÃ­sticas
 $stats_sql = "SELECT 
     COUNT(*) as total,
     SUM(CASE WHEN status = 'nao_lido' THEN 1 ELSE 0 END) as nao_lidos,
@@ -138,13 +138,13 @@ $stats = $stats_stmt->fetch();
                         <li class="nav-item">
                             <a class="nav-link text-white" href="../imoveis/">
                                 <i class="fas fa-home me-2"></i>
-                                Imóveis
+                                ImÃ³veis
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-white" href="../usuarios/">
                                 <i class="fas fa-users me-2"></i>
-                                Usuários
+                                UsuÃ¡rios
                             </a>
                         </li>
                         <li class="nav-item">
@@ -156,7 +156,7 @@ $stats = $stats_stmt->fetch();
                         <li class="nav-item">
                             <a class="nav-link text-white" href="../configuracoes/">
                                 <i class="fas fa-cog me-2"></i>
-                                Configurações
+                                ConfiguraÃ§Ãµes
                             </a>
                         </li>
                         <li class="nav-item">
@@ -207,7 +207,7 @@ $stats = $stats_stmt->fetch();
                     </div>
                 <?php endif; ?>
 
-                <!-- Estatísticas -->
+                <!-- EstatÃ­sticas -->
                 <div class="row mb-4">
                     <div class="col-md-3">
                         <div class="card bg-primary text-white">
@@ -230,7 +230,7 @@ $stats = $stats_stmt->fetch();
                                 <div class="d-flex justify-content-between">
                                     <div>
                                         <h4 class="mb-0"><?php echo $stats['nao_lidos']; ?></h4>
-                                        <small>Não Lidos</small>
+                                        <small>NÃ£o Lidos</small>
                                     </div>
                                     <div class="align-self-center">
                                         <i class="fas fa-envelope-open fa-2x"></i>
@@ -271,7 +271,7 @@ $stats = $stats_stmt->fetch();
                     </div>
                 </div>
 
-                <!-- Estatísticas por Tipo -->
+                <!-- EstatÃ­sticas por Tipo -->
                 <div class="row mb-4">
                     <div class="col-md-4">
                         <div class="card bg-success text-white">
@@ -308,7 +308,7 @@ $stats = $stats_stmt->fetch();
                                             echo $locacoes_stmt->fetch()['total'];
                                             ?>
                                         </h4>
-                                        <small>Contatos de Locação</small>
+                                        <small>Contatos de LocaÃ§Ã£o</small>
                                     </div>
                                     <div class="align-self-center">
                                         <i class="fas fa-key fa-2x"></i>
@@ -351,7 +351,7 @@ $stats = $stats_stmt->fetch();
                             <div class="col-md-2">
                                 <select name="status" class="form-select">
                                     <option value="">Todos os Status</option>
-                                    <option value="nao_lido" <?php echo $status_filter === 'nao_lido' ? 'selected' : ''; ?>>Não Lidos</option>
+                                    <option value="nao_lido" <?php echo $status_filter === 'nao_lido' ? 'selected' : ''; ?>>NÃ£o Lidos</option>
                                     <option value="lido" <?php echo $status_filter === 'lido' ? 'selected' : ''; ?>>Lidos</option>
                                 </select>
                             </div>
@@ -359,7 +359,7 @@ $stats = $stats_stmt->fetch();
                                 <select name="tipo" class="form-select">
                                     <option value="">Todos os Tipos</option>
                                     <option value="venda" <?php echo (isset($_GET['tipo']) && $_GET['tipo'] === 'venda') ? 'selected' : ''; ?>>Venda</option>
-                                    <option value="locacao" <?php echo (isset($_GET['tipo']) && $_GET['tipo'] === 'locacao') ? 'selected' : ''; ?>>Locação</option>
+                                    <option value="locacao" <?php echo (isset($_GET['tipo']) && $_GET['tipo'] === 'locacao') ? 'selected' : ''; ?>>LocaÃ§Ã£o</option>
                                     <option value="outros" <?php echo (isset($_GET['tipo']) && $_GET['tipo'] === 'outros') ? 'selected' : ''; ?>>Outros</option>
                                 </select>
                             </div>
@@ -391,7 +391,7 @@ $stats = $stats_stmt->fetch();
                                 <th>Tipo</th>
                                 <th>Status</th>
                                 <th>Data Envio</th>
-                                <th>Ações</th>
+                                <th>AÃ§Ãµes</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -430,7 +430,7 @@ $stats = $stats_stmt->fetch();
                                                 <?php elseif ($contato['tipo_operacao'] === 'locacao'): ?>
                                                     <span class="badge bg-info">
                                                         <i class="fas fa-key me-1"></i>
-                                                        Locação
+                                                        LocaÃ§Ã£o
                                                     </span>
                                                 <?php else: ?>
                                                     <span class="badge bg-secondary">
@@ -446,7 +446,7 @@ $stats = $stats_stmt->fetch();
                                             <?php if ($contato['status'] === 'nao_lido'): ?>
                                                 <span class="badge bg-warning">
                                                     <i class="fas fa-envelope-open me-1"></i>
-                                                    Não Lido
+                                                    NÃ£o Lido
                                                 </span>
                                             <?php else: ?>
                                                 <span class="badge bg-success">
@@ -468,7 +468,7 @@ $stats = $stats_stmt->fetch();
                                                 <form method="POST" style="display: inline;">
                                                     <input type="hidden" name="contact_id" value="<?php echo $contato['id']; ?>">
                                                     <input type="hidden" name="current_status" value="<?php echo $contato['status']; ?>">
-                                                    <button type="submit" name="toggle_status" class="btn btn-outline-<?php echo $contato['status'] === 'nao_lido' ? 'success' : 'warning'; ?>" title="<?php echo $contato['status'] === 'nao_lido' ? 'Marcar como lido' : 'Marcar como não lido'; ?>">
+                                                    <button type="submit" name="toggle_status" class="btn btn-outline-<?php echo $contato['status'] === 'nao_lido' ? 'success' : 'warning'; ?>" title="<?php echo $contato['status'] === 'nao_lido' ? 'Marcar como lido' : 'Marcar como nÃ£o lido'; ?>">
                                                         <i class="fas fa-<?php echo $contato['status'] === 'nao_lido' ? 'check' : 'envelope'; ?>"></i>
                                                     </button>
                                                 </form>
@@ -485,9 +485,9 @@ $stats = $stats_stmt->fetch();
                     </table>
                 </div>
 
-                <!-- Paginação -->
+                <!-- PaginaÃ§Ã£o -->
                 <?php if ($total_pages > 1): ?>
-                    <nav aria-label="Navegação de páginas">
+                    <nav aria-label="NavegaÃ§Ã£o de pÃ¡ginas">
                         <ul class="pagination justify-content-center">
                             <?php if ($page > 1): ?>
                                 <li class="page-item">
@@ -519,14 +519,14 @@ $stats = $stats_stmt->fetch();
         </div>
     </div>
 
-    <!-- Modal de Confirmação de Exclusão -->
+    <!-- Modal de ConfirmaÃ§Ã£o de ExclusÃ£o -->
     <div class="modal fade" id="deleteModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">
                         <i class="fas fa-exclamation-triangle text-danger me-2"></i>
-                        Confirmar Exclusão
+                        Confirmar ExclusÃ£o
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
@@ -534,7 +534,7 @@ $stats = $stats_stmt->fetch();
                     <p>Tem certeza que deseja excluir o contato de <strong id="contactName"></strong>?</p>
                     <p class="text-danger">
                         <i class="fas fa-info-circle me-1"></i>
-                        Esta ação não pode ser desfeita.
+                        Esta aÃ§Ã£o nÃ£o pode ser desfeita.
                     </p>
                 </div>
                 <div class="modal-footer">

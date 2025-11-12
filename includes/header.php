@@ -11,13 +11,13 @@
     <link href="<?php echo getAssetPath('css/style.css'); ?>" rel="stylesheet">
     
     <!-- Meta tags SEO -->
-    <meta name="description" content="JTR Imóveis - Encontre seu lar dos sonhos. Imóveis em São Paulo e região com as melhores condições.">
+    <meta name="description" content="imobsites - Encontre seu lar dos sonhos. Imóveis em São Paulo e região com as melhores condições.">
     <meta name="keywords" content="imóveis, casas, apartamentos, São Paulo, compra, venda, aluguel">
-    <meta name="author" content="JTR Imóveis">
+    <meta name="author" content="imobsites">
     
     <!-- Open Graph -->
     <meta property="og:title" content="<?php echo SITE_NAME; ?>">
-    <meta property="og:description" content="Encontre seu lar dos sonhos com a JTR Imóveis">
+    <meta property="og:description" content="Encontre seu lar dos sonhos com a imobsites">
     <meta property="og:type" content="website">
     <meta property="og:url" content="<?php echo getBaseUrl(); ?>">
 </head>
@@ -47,7 +47,7 @@
                 <div class="row align-items-center w-100">
                     <div class="col-lg-6 col-md-6 col-6">
                         <a class="navbar-brand" href="<?php echo getPagePath('home'); ?>">
-                            <img src="<?php echo getAssetPath('logo-jtr.png'); ?>" alt="JTR Imóveis" class="logo-img">
+                            <img src="<?php echo getAssetPath('logo-imob.png'); ?>" alt="Imobsites" class="logo-img">
                         </a>
                     </div>
                     

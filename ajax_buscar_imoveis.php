@@ -287,7 +287,7 @@ try {
                                     <i class="fas fa-eye me-1"></i> Ver Detalhes
                                 </a>
                                 <button class="btn btn-outline-success btn-sm"
-                                        onclick="contatarCorretor(\'JTR Imóveis\', \'' . PHONE_VENDA . '\')">
+                                        onclick="contatarCorretor('imobsites', \'' . PHONE_VENDA . '\')">
                                     <i class="fas fa-phone"></i> Falar com um Especialista
                                 </button>
                             </div>

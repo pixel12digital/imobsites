@@ -1,5 +1,5 @@
 <?php
-// Página Sobre - JTR Imóveis
+// Página Sobre - imobsites
 
 // Buscar estatísticas para mostrar na página
 $total_imoveis = fetch("SELECT COUNT(*) as total FROM imoveis")['total'];
@@ -28,10 +28,10 @@ $total_clientes = fetch("SELECT COUNT(*) as total FROM clientes")['total'];
                 <div class="history-content">
                     <h2 class="mb-4">Nossa História</h2>
                     <p class="lead mb-4">
-                        <strong>Construtora Rossi e Rossi e JTR Incorporadora em São José dos Campos</strong>
+                        <strong>Construtora Rossi e Rossi e Imobsites Incorporadora em São José dos Campos</strong>
                     </p>
                     <p class="mb-4">
-                        Desde 1991, a JTR transforma projetos em realidade, ajudando famílias a conquistarem a casa própria e empresários a encontrarem o espaço ideal para seus negócios.
+                        Desde 1991, a Imobsites transforma projetos em realidade, ajudando famílias a conquistarem a casa própria e empresários a encontrarem o espaço ideal para seus negócios.
                     </p>
                     <p class="mb-4">
                         Somos uma empresa familiar, com mais de 30 anos de experiência em construção e incorporação de imóveis residenciais e comerciais, sempre com qualidade, segurança e valorização.
@@ -41,7 +41,7 @@ $total_clientes = fetch("SELECT COUNT(*) as total FROM clientes")['total'];
                         <strong>Comerciais:</strong> empreendimentos que unem localização estratégica e estrutura ideal para o crescimento dos negócios.
                     </p>
                     <div class="mt-4">
-                        <h5 class="mb-3">Por que escolher a JTR?</h5>
+                        <h5 class="mb-3">Por que escolher a Imobsites?</h5>
                         <ul class="list-unstyled">
                             <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Tradição e credibilidade desde 1991</li>
                             <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Empreendimentos que valorizam ao longo do tempo</li>

@@ -1,5 +1,5 @@
 <?php
-// Página de Imóveis - JTR Imóveis
+// Página de Imóveis - imobsites
 
 // Página de Listagem de Imóveis com Filtros Avançados
 $page_title = 'Imóveis Disponíveis - ' . SITE_NAME;
@@ -554,7 +554,7 @@ if ($preco_locacao_max > 0) $filtros_ativos[] = "Preço máximo (Locação): " .
                                                 <i class="fas fa-eye"></i> Ver Detalhes
                                             </a>
                                             <button class="btn btn-outline-success btn-sm" 
-                                                    onclick="contatarCorretor('JTR Imóveis', '<?= PHONE_VENDA ?>')">
+                                                    onclick="contatarCorretor('imobsites', '<?= PHONE_VENDA ?>')">
                                                 <i class="fas fa-phone"></i> Falar com um Especialista
                                             </button>
                                             <button class="btn btn-outline-info btn-sm" 

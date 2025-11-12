@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo isset($page_title) ? $page_title . ' - ' : ''; ?>Painel Administrativo JTR Imóveis</title>
+    <title><?php echo isset($page_title) ? $page_title . ' - ' : ''; ?>Painel Administrativo imobsites</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -16,8 +16,9 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
-            <a class="navbar-brand" href="index.php">
-                <i class="fas fa-home me-2"></i>JTR Imóveis - Admin
+            <a class="navbar-brand d-flex align-items-center" href="index.php">
+                <img src="../assets/logo-imob.png" alt="Imobsites" class="me-2" style="height: 36px; width: auto;">
+                <span class="fw-semibold">Imobsites Admin</span>
             </a>
             
             <div class="navbar-nav ms-auto">

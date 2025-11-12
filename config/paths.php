@@ -1,6 +1,6 @@
 <?php
 /**
- * Configuração de Caminhos - JTR Imóveis
+ * Configuração de Caminhos - imobsites
  * Centraliza todas as definições de paths para funcionar em qualquer ambiente
  */
 
@@ -127,7 +127,7 @@ function getAssetPath($assetPath) {
     
     // Debug: log do caminho gerado (apenas em desenvolvimento)
     if (isDevelopment() && isDebugMode()) {
-        error_log('[JTR Imóveis] Asset path: ' . $assetPath . ' -> ' . $path);
+        error_log('[imobsites] Asset path: ' . $assetPath . ' -> ' . $path);
     }
     
     return $path;
@@ -294,7 +294,7 @@ function isDebugMode() {
 // Função para log de erros (apenas em desenvolvimento)
 function logError($message, $context = []) {
     if (isDevelopment()) {
-        error_log('[JTR Imóveis] ' . $message . ' ' . json_encode($context));
+        error_log('[imobsites] ' . $message . ' ' . json_encode($context));
     }
 }
 

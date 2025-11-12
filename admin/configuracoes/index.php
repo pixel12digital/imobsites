@@ -1,22 +1,22 @@
-<?php
+﻿<?php
 // Iniciar output buffering para evitar problemas com headers
 ob_start();
 
-// Carregar configurações ANTES de iniciar a sessão
+// Carregar configuraÃ§Ãµes ANTES de iniciar a sessÃ£o
 require_once '../../config/paths.php';
 require_once '../../config/database.php';
 require_once '../../config/config.php';
 
-// Agora iniciar a sessão
+// Agora iniciar a sessÃ£o
 session_start();
 
-// Verificar se o usuário está logado
+// Verificar se o usuÃ¡rio estÃ¡ logado
 if (!isset($_SESSION['admin_logged_in']) || !$_SESSION['admin_logged_in']) {
     header('Location: ../login.php');
     exit;
 }
 
-// Verificar se o usuário tem nível de administrador
+// Verificar se o usuÃ¡rio tem nÃ­vel de administrador
 if ($_SESSION['admin_nivel'] !== 'admin') {
     header('Location: ../index.php');
     exit;
@@ -25,19 +25,19 @@ if ($_SESSION['admin_nivel'] !== 'admin') {
 $error = '';
 $success = '';
 
-// Processar formulário
+// Processar formulÃ¡rio
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['update_general'])) {
-        // Atualizar configurações gerais
+        // Atualizar configuraÃ§Ãµes gerais
         $site_name = cleanInput($_POST['site_name']);
         $site_description = cleanInput($_POST['site_description']);
         $site_keywords = cleanInput($_POST['site_keywords']);
         $site_author = cleanInput($_POST['site_author']);
         
         if (empty($site_name)) {
-            $error = 'O nome do site é obrigatório.';
+            $error = 'O nome do site Ã© obrigatÃ³rio.';
         } else {
-            // Atualizar configurações na tabela configuracoes
+            // Atualizar configuraÃ§Ãµes na tabela configuracoes
             $configs = [
                 'site_name' => $site_name,
                 'site_description' => $site_description,
@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $success_count = 0;
             foreach ($configs as $key => $value) {
-                // Verificar se a configuração já existe
+                // Verificar se a configuraÃ§Ã£o jÃ¡ existe
                 $existing = fetch('configuracoes', 'chave = ?', [$key]);
                 if ($existing) {
                     if (update('configuracoes', ['valor' => $value], 'chave = ?', [$key])) {
@@ -61,13 +61,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             if ($success_count === count($configs)) {
-                $success = 'Configurações gerais atualizadas com sucesso!';
+                $success = 'ConfiguraÃ§Ãµes gerais atualizadas com sucesso!';
             } else {
-                $error = 'Erro ao atualizar algumas configurações.';
+                $error = 'Erro ao atualizar algumas configuraÃ§Ãµes.';
             }
         }
     } elseif (isset($_POST['update_contact'])) {
-        // Atualizar informações de contato
+        // Atualizar informaÃ§Ãµes de contato
         $company_address = cleanInput($_POST['company_address']);
         $company_phone = cleanInput($_POST['company_phone']);
         $company_email = cleanInput($_POST['company_email']);
@@ -99,21 +99,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         if ($success_count === count($contact_configs)) {
-            $success = 'Informações de contato atualizadas com sucesso!';
+            $success = 'InformaÃ§Ãµes de contato atualizadas com sucesso!';
         } else {
-            $error = 'Erro ao atualizar algumas informações de contato.';
+            $error = 'Erro ao atualizar algumas informaÃ§Ãµes de contato.';
         }
     } elseif (isset($_POST['update_system'])) {
-        // Atualizar configurações do sistema
+        // Atualizar configuraÃ§Ãµes do sistema
         $maintenance_mode = isset($_POST['maintenance_mode']) ? 1 : 0;
         $max_upload_size = (int)$_POST['max_upload_size'];
         $items_per_page = (int)$_POST['items_per_page'];
         $enable_notifications = isset($_POST['enable_notifications']) ? 1 : 0;
         
         if ($max_upload_size < 1 || $max_upload_size > 100) {
-            $error = 'O tamanho máximo de upload deve estar entre 1 e 100 MB.';
+            $error = 'O tamanho mÃ¡ximo de upload deve estar entre 1 e 100 MB.';
         } elseif ($items_per_page < 5 || $items_per_page > 100) {
-            $error = 'Itens por página deve estar entre 5 e 100.';
+            $error = 'Itens por pÃ¡gina deve estar entre 5 e 100.';
         } else {
             $system_configs = [
                 'maintenance_mode' => $maintenance_mode,
@@ -137,15 +137,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             if ($success_count === count($system_configs)) {
-                $success = 'Configurações do sistema atualizadas com sucesso!';
+                $success = 'ConfiguraÃ§Ãµes do sistema atualizadas com sucesso!';
             } else {
-                $error = 'Erro ao atualizar algumas configurações do sistema.';
+                $error = 'Erro ao atualizar algumas configuraÃ§Ãµes do sistema.';
             }
         }
     }
 }
 
-// Buscar configurações existentes
+// Buscar configuraÃ§Ãµes existentes
 function getConfig($key, $default = '') {
     global $pdo;
     $stmt = $pdo->prepare("SELECT valor FROM configuracoes WHERE chave = ?");
@@ -154,7 +154,7 @@ function getConfig($key, $default = '') {
     return $result ? $result['valor'] : $default;
 }
 
-// Buscar todas as configurações
+// Buscar todas as configuraÃ§Ãµes
 $configuracoes = [];
 $stmt = $pdo->query("SELECT chave, valor FROM configuracoes");
 while ($row = $stmt->fetch()) {
@@ -167,7 +167,7 @@ while ($row = $stmt->fetch()) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configurações - Painel Admin</title>
+    <title>ConfiguraÃ§Ãµes - Painel Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="../assets/css/admin.css" rel="stylesheet">
@@ -188,13 +188,13 @@ while ($row = $stmt->fetch()) {
                         <li class="nav-item">
                             <a class="nav-link text-white" href="../imoveis/">
                                 <i class="fas fa-home me-2"></i>
-                                Imóveis
+                                ImÃ³veis
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-white" href="../usuarios/">
                                 <i class="fas fa-users me-2"></i>
-                                Usuários
+                                UsuÃ¡rios
                             </a>
                         </li>
                         <li class="nav-item">
@@ -206,7 +206,7 @@ while ($row = $stmt->fetch()) {
                         <li class="nav-item">
                             <a class="nav-link text-white active" href="../configuracoes/">
                                 <i class="fas fa-cog me-2"></i>
-                                Configurações
+                                ConfiguraÃ§Ãµes
                             </a>
                         </li>
                         <li class="nav-item">
@@ -230,7 +230,7 @@ while ($row = $stmt->fetch()) {
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">
                         <i class="fas fa-cog me-2"></i>
-                        Configurações do Sistema
+                        ConfiguraÃ§Ãµes do Sistema
                     </h1>
                 </div>
 
@@ -251,7 +251,7 @@ while ($row = $stmt->fetch()) {
                     </div>
                 <?php endif; ?>
 
-                <!-- Abas de Configuração -->
+                <!-- Abas de ConfiguraÃ§Ã£o -->
                 <ul class="nav nav-tabs" id="configTabs" role="tablist">
                     <li class="nav-item" role="presentation">
                         <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button" role="tab">
@@ -274,13 +274,13 @@ while ($row = $stmt->fetch()) {
                 </ul>
 
                 <div class="tab-content mt-3" id="configTabsContent">
-                    <!-- Configurações Gerais -->
+                    <!-- ConfiguraÃ§Ãµes Gerais -->
                     <div class="tab-pane fade show active" id="general" role="tabpanel">
                         <div class="card">
                             <div class="card-header">
                                 <h5 class="card-title mb-0">
                                     <i class="fas fa-globe me-2"></i>
-                                    Configurações Gerais do Site
+                                    ConfiguraÃ§Ãµes Gerais do Site
                                 </h5>
                             </div>
                             <div class="card-body">
@@ -309,11 +309,11 @@ while ($row = $stmt->fetch()) {
                                     <div class="mb-3">
                                         <label for="site_description" class="form-label">
                                             <i class="fas fa-align-left me-1"></i>
-                                            Descrição do Site
+                                            DescriÃ§Ã£o do Site
                                         </label>
                                         <textarea class="form-control" id="site_description" name="site_description" rows="3" 
-                                                  placeholder="Descrição que aparecerá nos motores de busca..."><?php echo htmlspecialchars($configuracoes['site_description'] ?? ''); ?></textarea>
-                                        <div class="form-text">Máximo 160 caracteres para SEO</div>
+                                                  placeholder="DescriÃ§Ã£o que aparecerÃ¡ nos motores de busca..."><?php echo htmlspecialchars($configuracoes['site_description'] ?? ''); ?></textarea>
+                                        <div class="form-text">MÃ¡ximo 160 caracteres para SEO</div>
                                     </div>
 
                                     <div class="mb-3">
@@ -324,13 +324,13 @@ while ($row = $stmt->fetch()) {
                                         <input type="text" class="form-control" id="site_keywords" name="site_keywords" 
                                                value="<?php echo htmlspecialchars($configuracoes['site_keywords'] ?? ''); ?>"
                                                placeholder="palavra1, palavra2, palavra3">
-                                        <div class="form-text">Separe as palavras-chave por vírgula</div>
+                                        <div class="form-text">Separe as palavras-chave por vÃ­rgula</div>
                                     </div>
 
                                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                                         <button type="submit" name="update_general" class="btn btn-primary">
                                             <i class="fas fa-save me-2"></i>
-                                            Salvar Configurações Gerais
+                                            Salvar ConfiguraÃ§Ãµes Gerais
                                         </button>
                                     </div>
                                 </form>
@@ -338,13 +338,13 @@ while ($row = $stmt->fetch()) {
                         </div>
                     </div>
 
-                    <!-- Informações de Contato -->
+                    <!-- InformaÃ§Ãµes de Contato -->
                     <div class="tab-pane fade" id="contact" role="tabpanel">
                         <div class="card">
                             <div class="card-header">
                                 <h5 class="card-title mb-0">
                                     <i class="fas fa-address-book me-2"></i>
-                                    Informações de Contato da Empresa
+                                    InformaÃ§Ãµes de Contato da Empresa
                                 </h5>
                             </div>
                             <div class="card-body">
@@ -353,10 +353,10 @@ while ($row = $stmt->fetch()) {
                                         <div class="col-md-6 mb-3">
                                             <label for="company_address" class="form-label">
                                                 <i class="fas fa-map-marker-alt me-1"></i>
-                                                Endereço
+                                                EndereÃ§o
                                             </label>
                                             <textarea class="form-control" id="company_address" name="company_address" rows="3"
-                                                      placeholder="Endereço completo da empresa..."><?php echo htmlspecialchars($configuracoes['company_address'] ?? ''); ?></textarea>
+                                                      placeholder="EndereÃ§o completo da empresa..."><?php echo htmlspecialchars($configuracoes['company_address'] ?? ''); ?></textarea>
                                         </div>
                                         
                                         <div class="col-md-6 mb-3">
@@ -417,7 +417,7 @@ while ($row = $stmt->fetch()) {
                                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                                         <button type="submit" name="update_contact" class="btn btn-primary">
                                             <i class="fas fa-save me-2"></i>
-                                            Salvar Informações de Contato
+                                            Salvar InformaÃ§Ãµes de Contato
                                         </button>
                                     </div>
                                 </form>
@@ -425,13 +425,13 @@ while ($row = $stmt->fetch()) {
                         </div>
                     </div>
 
-                    <!-- Configurações do Sistema -->
+                    <!-- ConfiguraÃ§Ãµes do Sistema -->
                     <div class="tab-pane fade" id="system" role="tabpanel">
                         <div class="card">
                             <div class="card-header">
                                 <h5 class="card-title mb-0">
                                     <i class="fas fa-server me-2"></i>
-                                    Configurações do Sistema
+                                    ConfiguraÃ§Ãµes do Sistema
                                 </h5>
                             </div>
                             <div class="card-body">
@@ -443,9 +443,9 @@ while ($row = $stmt->fetch()) {
                                                        <?php echo ($configuracoes['maintenance_mode'] ?? 0) ? 'checked' : ''; ?>>
                                                 <label class="form-check-label" for="maintenance_mode">
                                                     <i class="fas fa-tools me-1"></i>
-                                                    Modo Manutenção
+                                                    Modo ManutenÃ§Ã£o
                                                 </label>
-                                                <div class="form-text">Ativa uma página de manutenção para visitantes</div>
+                                                <div class="form-text">Ativa uma pÃ¡gina de manutenÃ§Ã£o para visitantes</div>
                                             </div>
                                         </div>
                                         
@@ -455,9 +455,9 @@ while ($row = $stmt->fetch()) {
                                                        <?php echo ($configuracoes['enable_notifications'] ?? 1) ? 'checked' : ''; ?>>
                                                 <label class="form-check-label" for="enable_notifications">
                                                     <i class="fas fa-bell me-1"></i>
-                                                    Notificações
+                                                    NotificaÃ§Ãµes
                                                 </label>
-                                                <div class="form-text">Habilita notificações do sistema</div>
+                                                <div class="form-text">Habilita notificaÃ§Ãµes do sistema</div>
                                             </div>
                                         </div>
                                     </div>
@@ -466,7 +466,7 @@ while ($row = $stmt->fetch()) {
                                         <div class="col-md-6 mb-3">
                                             <label for="max_upload_size" class="form-label">
                                                 <i class="fas fa-upload me-1"></i>
-                                                Tamanho Máximo de Upload (MB)
+                                                Tamanho MÃ¡ximo de Upload (MB)
                                             </label>
                                             <input type="number" class="form-control" id="max_upload_size" name="max_upload_size" 
                                                    value="<?php echo htmlspecialchars($configuracoes['max_upload_size'] ?? 10); ?>" 
@@ -477,7 +477,7 @@ while ($row = $stmt->fetch()) {
                                         <div class="col-md-6 mb-3">
                                             <label for="items_per_page" class="form-label">
                                                 <i class="fas fa-list me-1"></i>
-                                                Itens por Página
+                                                Itens por PÃ¡gina
                                             </label>
                                             <input type="number" class="form-control" id="items_per_page" name="items_per_page" 
                                                    value="<?php echo htmlspecialchars($configuracoes['items_per_page'] ?? 20); ?>" 
@@ -489,7 +489,7 @@ while ($row = $stmt->fetch()) {
                                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                                         <button type="submit" name="update_system" class="btn btn-primary">
                                             <i class="fas fa-save me-2"></i>
-                                            Salvar Configurações do Sistema
+                                            Salvar ConfiguraÃ§Ãµes do Sistema
                                         </button>
                                     </div>
                                 </form>
@@ -498,24 +498,24 @@ while ($row = $stmt->fetch()) {
                     </div>
                 </div>
 
-                <!-- Informações do Sistema -->
+                <!-- InformaÃ§Ãµes do Sistema -->
                 <div class="row mt-4">
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header">
                                 <h5 class="card-title mb-0">
                                     <i class="fas fa-info-circle me-2"></i>
-                                    Informações do Sistema
+                                    InformaÃ§Ãµes do Sistema
                                 </h5>
                             </div>
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-3">
-                                        <strong>Versão do PHP:</strong><br>
+                                        <strong>VersÃ£o do PHP:</strong><br>
                                         <span class="text-muted"><?php echo PHP_VERSION; ?></span>
                                     </div>
                                     <div class="col-md-3">
-                                        <strong>Versão do MySQL:</strong><br>
+                                        <strong>VersÃ£o do MySQL:</strong><br>
                                         <span class="text-muted"><?php echo $pdo->getAttribute(PDO::ATTR_SERVER_VERSION); ?></span>
                                     </div>
                                     <div class="col-md-3">
@@ -523,7 +523,7 @@ while ($row = $stmt->fetch()) {
                                         <span class="text-muted"><?php echo ini_get('upload_max_filesize'); ?></span>
                                     </div>
                                     <div class="col-md-3">
-                                        <strong>Limite de Memória:</strong><br>
+                                        <strong>Limite de MemÃ³ria:</strong><br>
                                         <span class="text-muted"><?php echo ini_get('memory_limit'); ?></span>
                                     </div>
                                 </div>
@@ -538,7 +538,7 @@ while ($row = $stmt->fetch()) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../assets/js/admin.js"></script>
     <script>
-        // Contador de caracteres para descrição
+        // Contador de caracteres para descriÃ§Ã£o
         document.getElementById('site_description').addEventListener('input', function() {
             const maxLength = 160;
             const currentLength = this.value.length;
@@ -554,7 +554,7 @@ while ($row = $stmt->fetch()) {
             }
         });
         
-        // Máscara para telefone
+        // MÃ¡scara para telefone
         function applyPhoneMask(input) {
             input.addEventListener('input', function(e) {
                 let value = e.target.value.replace(/\D/g, '');
@@ -576,7 +576,7 @@ while ($row = $stmt->fetch()) {
             });
         }
         
-        // Aplicar máscara aos campos de telefone
+        // Aplicar mÃ¡scara aos campos de telefone
         applyPhoneMask(document.getElementById('company_phone'));
         applyPhoneMask(document.getElementById('company_whatsapp'));
     </script>

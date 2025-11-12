@@ -9,9 +9,9 @@
                     <h5><?php echo SITE_NAME; ?></h5>
                     <p>Realizamos sonhos com paixão, dedicação e recursos para ajudar nossos clientes a atingir seus objetivos de compra e venda.</p>
                     <div class="social-links mt-3">
-                        <a href="#" aria-label="Facebook da JTR Imóveis"><i class="fab fa-facebook-f fa-lg"></i></a>
-                        <a href="#" aria-label="Instagram da JTR Imóveis"><i class="fab fa-instagram fa-lg"></i></a>
-                        <a href="#" aria-label="WhatsApp da JTR Imóveis"><i class="fab fa-whatsapp fa-lg"></i></a>
+                        <a href="#" aria-label="Facebook da imobsites"><i class="fab fa-facebook-f fa-lg"></i></a>
+                        <a href="#" aria-label="Instagram da imobsites"><i class="fab fa-instagram fa-lg"></i></a>
+                        <a href="#" aria-label="WhatsApp da imobsites"><i class="fab fa-whatsapp fa-lg"></i></a>
                     </div>
                 </div>
 

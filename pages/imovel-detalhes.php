@@ -1,5 +1,5 @@
 <?php
-// Página de Detalhes do Imóvel - JTR Imóveis
+// Página de Detalhes do Imóvel - imobsites
 
 // Verificar se foi passado um ID
 $imovel_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;

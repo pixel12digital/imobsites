@@ -1,23 +1,23 @@
-<?php
+﻿<?php
 // Iniciar output buffering para evitar problemas com headers
 ob_start();
 
-// Carregar configurações ANTES de iniciar a sessão
+// Carregar configuraÃ§Ãµes ANTES de iniciar a sessÃ£o
 require_once '../../config/paths.php';
 require_once '../../config/database.php';
 require_once '../../config/tenant.php';
 require_once '../../config/config.php';
 
-// Agora iniciar a sessão
+// Agora iniciar a sessÃ£o
 session_start();
 
-// Verificar se o usuário está logado
+// Verificar se o usuÃ¡rio estÃ¡ logado
 if (!isset($_SESSION['admin_logged_in']) || !$_SESSION['admin_logged_in'] || !isset($_SESSION['tenant_id']) || (int)$_SESSION['tenant_id'] !== TENANT_ID) {
     header('Location: ../login.php');
     exit;
 }
 
-// Verificar se o usuário tem nível de administrador
+// Verificar se o usuÃ¡rio tem nÃ­vel de administrador
 if ($_SESSION['admin_nivel'] !== 'admin') {
     header('Location: ../index.php');
     exit;
@@ -28,7 +28,7 @@ $success = '';
 $contato = null;
 $contatos = [];
 
-// Processar marcação como lido
+// Processar marcaÃ§Ã£o como lido
 if (isset($_POST['mark_as_read']) && isset($_POST['contact_id'])) {
     $contact_id = (int)$_POST['contact_id'];
     
@@ -39,7 +39,7 @@ if (isset($_POST['mark_as_read']) && isset($_POST['contact_id'])) {
     }
 }
 
-// Se foi passado um ID específico, mostrar apenas esse contato
+// Se foi passado um ID especÃ­fico, mostrar apenas esse contato
 if (isset($_GET['id']) && !empty($_GET['id'])) {
     $contact_id = (int)$_GET['id'];
     $contato = fetch("SELECT * FROM contatos WHERE id = ? AND tenant_id = ?", [$contact_id, TENANT_ID]);
@@ -92,7 +92,7 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
 
     $total_pages = ceil($total_contacts / $per_page);
 
-    // Buscar contatos com paginação
+    // Buscar contatos com paginaÃ§Ã£o
     $sql = "SELECT id, nome, email, telefone, assunto, mensagem, status, data_envio FROM contatos " . $where_clause . " ORDER BY data_envio DESC LIMIT ? OFFSET ?";
     $params[] = $per_page;
     $params[] = $offset;
@@ -129,13 +129,13 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
                         <li class="nav-item">
                             <a class="nav-link text-white" href="../imoveis/">
                                 <i class="fas fa-home me-2"></i>
-                                Imóveis
+                                ImÃ³veis
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-white" href="../usuarios/">
                                 <i class="fas fa-users me-2"></i>
-                                Usuários
+                                UsuÃ¡rios
                             </a>
                         </li>
                         <li class="nav-item">
@@ -147,7 +147,7 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
                         <li class="nav-item">
                             <a class="nav-link text-white" href="../configuracoes/">
                                 <i class="fas fa-cog me-2"></i>
-                                Configurações
+                                ConfiguraÃ§Ãµes
                             </a>
                         </li>
                         <li class="nav-item">
@@ -199,7 +199,7 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
                 <?php endif; ?>
 
                 <?php if ($contato): ?>
-                    <!-- Visualizar Contato Específico -->
+                    <!-- Visualizar Contato EspecÃ­fico -->
                     <div class="row">
                         <div class="col-lg-8">
                             <div class="card">
@@ -294,7 +294,7 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
                                 <div class="card-header">
                                     <h5 class="card-title mb-0">
                                         <i class="fas fa-info-circle me-2"></i>
-                                        Informações do Contato
+                                        InformaÃ§Ãµes do Contato
                                     </h5>
                                 </div>
                                 <div class="card-body">
@@ -306,7 +306,7 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
                                         <?php if ($contato['status'] === 'nao_lido'): ?>
                                             <span class="badge bg-warning">
                                                 <i class="fas fa-envelope-open me-1"></i>
-                                                Não Lido
+                                                NÃ£o Lido
                                             </span>
                                         <?php else: ?>
                                             <span class="badge bg-success">
@@ -326,9 +326,9 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
                                         <h6><i class="fas fa-lightbulb me-2"></i>Dicas:</h6>
                                         <ul class="mb-0">
                                             <li>Clique no email para abrir o cliente de email</li>
-                                            <li>Clique no telefone para fazer uma ligação</li>
-                                            <li>Use o botão "Responder" para enviar email</li>
-                                            <li>Contatos não lidos são destacados</li>
+                                            <li>Clique no telefone para fazer uma ligaÃ§Ã£o</li>
+                                            <li>Use o botÃ£o "Responder" para enviar email</li>
+                                            <li>Contatos nÃ£o lidos sÃ£o destacados</li>
                                         </ul>
                                     </div>
                                 </div>
@@ -347,7 +347,7 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
                                 <div class="col-md-3">
                                     <select name="status" class="form-select">
                                         <option value="">Todos os Status</option>
-                                        <option value="nao_lido" <?php echo ($status_filter ?? '') === 'nao_lido' ? 'selected' : ''; ?>>Não Lidos</option>
+                                        <option value="nao_lido" <?php echo ($status_filter ?? '') === 'nao_lido' ? 'selected' : ''; ?>>NÃ£o Lidos</option>
                                         <option value="lido" <?php echo ($status_filter ?? '') === 'lido' ? 'selected' : ''; ?>>Lidos</option>
                                     </select>
                                 </div>
@@ -378,7 +378,7 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
                                         <?php if ($contato_item['status'] === 'nao_lido'): ?>
                                             <span class="badge bg-warning">
                                                 <i class="fas fa-envelope-open me-1"></i>
-                                                Não Lido
+                                                NÃ£o Lido
                                             </span>
                                         <?php else: ?>
                                             <span class="badge bg-success">
@@ -423,9 +423,9 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
                         <?php endforeach; ?>
                     </div>
 
-                    <!-- Paginação -->
+                    <!-- PaginaÃ§Ã£o -->
                     <?php if (isset($total_pages) && $total_pages > 1): ?>
-                        <nav aria-label="Navegação de páginas">
+                        <nav aria-label="NavegaÃ§Ã£o de pÃ¡ginas">
                             <ul class="pagination justify-content-center">
                                 <?php if ($page > 1): ?>
                                     <li class="page-item">

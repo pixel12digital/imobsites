@@ -9,7 +9,7 @@ define('DB_USER', 'u891304621_jtrimoveis');
 define('DB_PASS', 'Los@ngo#081081');
 
 // Log para debug
-error_log('[JTR Imóveis] FORÇANDO uso do banco REMOTO - Host: ' . DB_HOST . ' - Database: ' . DB_NAME);
+error_log('[imobsites] FORÇANDO uso do banco REMOTO - Host: ' . DB_HOST . ' - Database: ' . DB_NAME);
 
 try {
     // Conexão com timeout aumentado para conexões remotas
@@ -22,11 +22,11 @@ try {
     $pdo->setAttribute(PDO::ATTR_TIMEOUT, 30);
     $pdo->setAttribute(PDO::MYSQL_ATTR_INIT_COMMAND, "SET NAMES utf8");
     
-    error_log('[JTR Imóveis] Conexão com banco REMOTO estabelecida com sucesso');
+    error_log('[imobsites] Conexão com banco REMOTO estabelecida com sucesso');
     
 } catch(PDOException $e) {
     $error_msg = "Erro na conexão com o banco REMOTO: " . $e->getMessage();
-    error_log('[JTR Imóveis] ' . $error_msg);
+    error_log('[imobsites] ' . $error_msg);
     
     // Em caso de erro, mostrar mensagem detalhada para debug
     die("Erro crítico: " . $error_msg . "<br><br>

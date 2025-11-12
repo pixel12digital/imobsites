@@ -1,5 +1,5 @@
 <?php
-// Página de Comparador de Imóveis - JTR Imóveis
+// Página de Comparador de Imóveis - imobsites
 
 // Página do Comparador de Imóveis
 $page_title = 'Comparador de Imóveis - ' . SITE_NAME;

@@ -22,27 +22,43 @@ if (!isset($_SESSION['master_logged_in']) || $_SESSION['master_logged_in'] !== t
         }
         .sidebar {
             min-height: 100vh;
-            background: #0a1429;
+            background: #1C3B5A;
         }
         .sidebar .nav-link {
-            color: #d0d5e4;
+            color: rgba(245, 247, 250, 0.8);
         }
         .sidebar .nav-link.active {
-            background: rgba(255,255,255,0.1);
+            background: rgba(247, 147, 30, 0.18);
             color: #fff;
             border-radius: .375rem;
         }
         .navbar-brand span {
             font-weight: 600;
         }
+        .navbar-brand img {
+            height: 34px;
+            width: auto;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #1C3B5A 0%, #1E232B 100%);
+        }
+        .btn-outline-light {
+            border-color: rgba(245, 247, 250, 0.6);
+            color: #F5F7FA;
+        }
+        .btn-outline-light:hover {
+            background-color: #F7931E;
+            border-color: #F7931E;
+            color: #1E232B;
+        }
     </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+<nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
     <div class="container-fluid">
-        <a class="navbar-brand" href="index.php">
-            <i class="fas fa-layer-group me-2"></i>
-            <span><?php echo MASTER_PANEL_NAME; ?></span>
+        <a class="navbar-brand d-flex align-items-center" href="index.php">
+            <img src="../assets/logo-imob.png" alt="Imobsites">
+            <span class="ms-2"><?php echo MASTER_PANEL_NAME; ?></span>
         </a>
         <div class="d-flex align-items-center text-white">
             <span class="me-3">

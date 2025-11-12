@@ -9,7 +9,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Configurações gerais do sistema
-define('SITE_NAME', tenantSetting('site_name', 'JTR Imóveis'));
+define('SITE_NAME', tenantSetting('site_name', 'imobsites'));
 define('SITE_URL', ''); // Será detectado automaticamente
 define('SITE_EMAIL', tenantSetting('site_email', 'contato@jtrimoveis.com.br'));
 
