@@ -9,6 +9,7 @@ ob_start();
 // Carregar configurações
 require_once '../../config/paths.php';
 require_once '../../config/database.php';
+require_once '../../config/tenant.php';
 require_once '../../config/config.php';
 
 // Iniciar sessão
@@ -18,7 +19,7 @@ session_start();
 header('Content-Type: application/json; charset=utf-8');
 
 // Verificar se o usuário está logado
-if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true || !isset($_SESSION['tenant_id']) || (int)$_SESSION['tenant_id'] !== TENANT_ID) {
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Usuário não autenticado']);
     exit;
@@ -59,8 +60,8 @@ try {
     $pdo->beginTransaction();
     
     // 1. Buscar informações do imóvel antes de excluir
-    $stmt = $pdo->prepare("SELECT titulo FROM imoveis WHERE id = ?");
-    $stmt->execute([$imovel_id]);
+    $stmt = $pdo->prepare("SELECT titulo FROM imoveis WHERE id = ? AND tenant_id = ?");
+    $stmt->execute([$imovel_id, TENANT_ID]);
     $imovel = $stmt->fetch();
     
     if (!$imovel) {
@@ -68,29 +69,29 @@ try {
     }
     
     // 2. Buscar fotos para excluir arquivos físicos
-    $stmt = $pdo->prepare("SELECT arquivo FROM fotos_imovel WHERE imovel_id = ?");
-    $stmt->execute([$imovel_id]);
+    $stmt = $pdo->prepare("SELECT arquivo FROM fotos_imovel WHERE imovel_id = ? AND tenant_id = ?");
+    $stmt->execute([$imovel_id, TENANT_ID]);
     $fotos = $stmt->fetchAll();
     
     // 3. Excluir interesses relacionados
-    $stmt = $pdo->prepare("DELETE FROM interesses WHERE imovel_id = ?");
-    $stmt->execute([$imovel_id]);
+    $stmt = $pdo->prepare("DELETE FROM interesses WHERE imovel_id = ? AND tenant_id = ?");
+    $stmt->execute([$imovel_id, TENANT_ID]);
     
     // 4. Excluir histórico de preços
-    $stmt = $pdo->prepare("DELETE FROM historico_precos WHERE imovel_id = ?");
-    $stmt->execute([$imovel_id]);
+    $stmt = $pdo->prepare("DELETE FROM historico_precos WHERE imovel_id = ? AND tenant_id = ?");
+    $stmt->execute([$imovel_id, TENANT_ID]);
     
     // 5. Excluir características associadas
-    $stmt = $pdo->prepare("DELETE FROM imovel_caracteristicas WHERE imovel_id = ?");
-    $stmt->execute([$imovel_id]);
+    $stmt = $pdo->prepare("DELETE FROM imovel_caracteristicas WHERE imovel_id = ? AND tenant_id = ?");
+    $stmt->execute([$imovel_id, TENANT_ID]);
     
     // 6. Excluir fotos do banco
-    $stmt = $pdo->prepare("DELETE FROM fotos_imovel WHERE imovel_id = ?");
-    $stmt->execute([$imovel_id]);
+    $stmt = $pdo->prepare("DELETE FROM fotos_imovel WHERE imovel_id = ? AND tenant_id = ?");
+    $stmt->execute([$imovel_id, TENANT_ID]);
     
     // 7. Excluir o imóvel principal
-    $stmt = $pdo->prepare("DELETE FROM imoveis WHERE id = ?");
-    $stmt->execute([$imovel_id]);
+    $stmt = $pdo->prepare("DELETE FROM imoveis WHERE id = ? AND tenant_id = ?");
+    $stmt->execute([$imovel_id, TENANT_ID]);
     
     // 8. Excluir arquivos físicos das fotos
     $upload_dir = '../../uploads/imoveis/' . $imovel_id . '/';

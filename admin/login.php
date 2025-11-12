@@ -5,12 +5,39 @@ ob_start();
 // Carregar configurações ANTES de iniciar a sessão
 require_once '../config/paths.php';
 require_once '../config/database.php';
+
+if (!function_exists('cleanInput')) {
+    function cleanInput($data) {
+        $data = trim($data);
+        $data = stripslashes($data);
+        return htmlspecialchars($data, ENT_QUOTES, 'UTF-8');
+    }
+}
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (isset($_GET['tenant'])) {
+    $tenant_slug = cleanInput($_GET['tenant']);
+    $tenant = fetch("SELECT id, name FROM tenants WHERE slug = ?", [$tenant_slug]);
+    if ($tenant) {
+        $_SESSION['tenant_override_id'] = (int)$tenant['id'];
+        $_SESSION['tenant_override_notice'] = 'Impersonando tenant: ' . $tenant['name'];
+    } else {
+        $_SESSION['tenant_override_notice'] = 'Tenant não encontrado para o slug informado.';
+    }
+}
+
+if (isset($_GET['clear_tenant'])) {
+    unset($_SESSION['tenant_override_id'], $_SESSION['tenant_override_notice']);
+}
+
+require_once '../config/tenant.php';
 require_once '../config/config.php';
 
-// Agora iniciar a sessão
-session_start();
-
 $error = '';
+$impersonate_notice = $_SESSION['tenant_override_notice'] ?? '';
 
 // Se já estiver logado, redirecionar para o dashboard
 if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
@@ -28,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         try {
             // Buscar usuário pelo email
-            $usuario = fetch("SELECT id, nome, email, senha, nivel FROM usuarios WHERE email = ? AND ativo = 1", [$email]);
+            $usuario = fetch("SELECT id, nome, email, senha, nivel FROM usuarios WHERE email = ? AND ativo = 1 AND tenant_id = ?", [$email, TENANT_ID]);
             
             if ($usuario && (password_verify($senha, $usuario['senha']) || $senha === $usuario['senha'])) {
                 if ($usuario['nivel'] === 'admin') {
@@ -38,6 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['admin_nome'] = $usuario['nome'];
                     $_SESSION['admin_email'] = $usuario['email'];
                     $_SESSION['admin_nivel'] = $usuario['nivel'];
+                    $_SESSION['tenant_id'] = TENANT_ID;
                     
                     // Redirecionar para o dashboard
                     header('Location: index.php');
@@ -257,7 +285,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         <p>Faça login para acessar o painel</p>
                                     </div>
                                     
-                                    <?php if ($error): ?>
+                <?php if ($impersonate_notice): ?>
+                    <div class="alert alert-info alert-dismissible fade show" role="alert">
+                        <i class="fas fa-user-secret me-2"></i>
+                        <?php echo htmlspecialchars($impersonate_notice); ?>
+                        <a href="login.php?clear_tenant=1" class="btn btn-sm btn-outline-light ms-3">Encerrar impersonação</a>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                <?php unset($_SESSION['tenant_override_notice']); endif; ?>
+
+                <?php if ($error): ?>
                                         <div class="alert alert-danger" role="alert">
                                             <i class="fas fa-exclamation-triangle me-2"></i><?php echo htmlspecialchars($error); ?>
                                         </div>

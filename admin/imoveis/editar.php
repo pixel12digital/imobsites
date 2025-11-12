@@ -6,13 +6,14 @@ ob_start();
 $config_path = dirname(__DIR__) . '/../config/';
 require_once $config_path . 'paths.php';
 require_once $config_path . 'database.php';
+require_once $config_path . 'tenant.php';
 require_once $config_path . 'config.php';
 
 // Agora iniciar a sessão
 session_start();
 
 // Verificar se o usuário está logado
-if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true || !isset($_SESSION['tenant_id']) || (int)$_SESSION['tenant_id'] !== TENANT_ID) {
     header('Location: ../login.php');
     exit;
 }
@@ -24,12 +25,12 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
  */
 function renumerarFotosAutomaticamente($imovel_id) {
     // Buscar todas as fotos do imóvel ordenadas pela ordem atual
-    $fotos_restantes = fetchAll("SELECT id FROM fotos_imovel WHERE imovel_id = ? ORDER BY ordem", [$imovel_id]);
+    $fotos_restantes = fetchAll("SELECT id FROM fotos_imovel WHERE imovel_id = ? AND tenant_id = ? ORDER BY ordem", [$imovel_id, TENANT_ID]);
     
     // Renumerar sequencialmente de 1 a N
     foreach ($fotos_restantes as $index => $foto) {
         $nova_ordem = $index + 1;
-        query("UPDATE fotos_imovel SET ordem = ? WHERE id = ?", [$nova_ordem, $foto['id']]);
+        query("UPDATE fotos_imovel SET ordem = ? WHERE id = ? AND tenant_id = ?", [$nova_ordem, $foto['id'], TENANT_ID]);
     }
     
     // Log para auditoria
@@ -53,11 +54,11 @@ $imovel_id = (int)$_GET['id'];
 $imovel = fetch("
     SELECT i.*, t.nome as tipo_nome, l.cidade, l.bairro, u.nome as corretor_nome 
     FROM imoveis i 
-    LEFT JOIN tipos_imovel t ON i.tipo_id = t.id 
-    LEFT JOIN localizacoes l ON i.localizacao_id = l.id 
-    LEFT JOIN usuarios u ON i.usuario_id = u.id 
-    WHERE i.id = ?
-", [$imovel_id]);
+    LEFT JOIN tipos_imovel t ON i.tipo_id = t.id AND t.tenant_id = i.tenant_id
+    LEFT JOIN localizacoes l ON i.localizacao_id = l.id AND l.tenant_id = i.tenant_id
+    LEFT JOIN usuarios u ON i.usuario_id = u.id AND u.tenant_id = i.tenant_id
+    WHERE i.id = ? AND i.tenant_id = ?
+", [$imovel_id, TENANT_ID]);
 
 if (!$imovel) {
     header('Location: index.php');
@@ -65,22 +66,22 @@ if (!$imovel) {
 }
 
 // Buscar dados para os selects
-$tipos_imovel = fetchAll("SELECT * FROM tipos_imovel ORDER BY nome");
-$localizacoes = fetchAll("SELECT * FROM localizacoes ORDER BY cidade, bairro");
-$usuarios = fetchAll("SELECT * FROM usuarios WHERE ativo = 1 ORDER BY nome");
+$tipos_imovel = fetchAll("SELECT * FROM tipos_imovel WHERE tenant_id = ? ORDER BY nome", [TENANT_ID]);
+$localizacoes = fetchAll("SELECT * FROM localizacoes WHERE tenant_id = ? ORDER BY cidade, bairro", [TENANT_ID]);
+$usuarios = fetchAll("SELECT * FROM usuarios WHERE ativo = 1 AND tenant_id = ? ORDER BY nome", [TENANT_ID]);
 $caracteristicas = fetchAll("SELECT * FROM caracteristicas ORDER BY nome");
 
 // Buscar características do imóvel
 $imovel_caracteristicas = fetchAll("
-    SELECT caracteristica_id FROM imovel_caracteristicas WHERE imovel_id = ?
-", [$imovel_id]);
+    SELECT caracteristica_id FROM imovel_caracteristicas WHERE imovel_id = ? AND tenant_id = ?
+", [$imovel_id, TENANT_ID]);
 
 $caracteristicas_selecionadas = array_column($imovel_caracteristicas, 'caracteristica_id');
 
 // Buscar fotos do imóvel
 $fotos_imovel = fetchAll("
-    SELECT * FROM fotos_imovel WHERE imovel_id = ? ORDER BY ordem
-", [$imovel_id]);
+    SELECT * FROM fotos_imovel WHERE imovel_id = ? AND tenant_id = ? ORDER BY ordem
+", [$imovel_id, TENANT_ID]);
 
 // Processar formulário
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -156,14 +157,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         error_log("DEBUG: Executando UPDATE na tabela imoveis");
         error_log("DEBUG: WHERE id = " . $imovel_id);
         
-        $resultado = update("imoveis", $dados_imovel, "id = ?", [$imovel_id]);
+        $resultado = update("imoveis", $dados_imovel, "id = ? AND tenant_id = ?", [$imovel_id, TENANT_ID]);
         
         error_log("DEBUG: Resultado do UPDATE: " . ($resultado ? 'SUCESSO' : 'FALHA'));
         
         // Verificar se realmente foi atualizado
         if ($resultado) {
-            $stmt = $pdo->prepare("SELECT preco FROM imoveis WHERE id = ?");
-            $stmt->execute([$imovel_id]);
+            $stmt = $pdo->prepare("SELECT preco FROM imoveis WHERE id = ? AND tenant_id = ?");
+            $stmt->execute([$imovel_id, TENANT_ID]);
             $preco_verificacao = $stmt->fetchColumn();
             error_log("DEBUG: Preço após UPDATE no banco: " . $preco_verificacao);
             
@@ -177,14 +178,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($resultado) {
             // Atualizar características
             // Primeiro, remover todas as características existentes
-            query("DELETE FROM imovel_caracteristicas WHERE imovel_id = ?", [$imovel_id]);
+            query("DELETE FROM imovel_caracteristicas WHERE imovel_id = ? AND tenant_id = ?", [$imovel_id, TENANT_ID]);
             
             // Inserir características selecionadas
             if (isset($_POST['caracteristicas']) && is_array($_POST['caracteristicas'])) {
                 foreach ($_POST['caracteristicas'] as $caracteristica_id) {
                     insert("imovel_caracteristicas", [
                         'imovel_id' => $imovel_id,
-                        'caracteristica_id' => (int)$caracteristica_id
+                        'caracteristica_id' => (int)$caracteristica_id,
+                        'tenant_id' => TENANT_ID
                     ]);
                 }
             }
@@ -192,7 +194,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Processar exclusão de fotos
             if (isset($_POST['excluir_fotos']) && is_array($_POST['excluir_fotos'])) {
                 foreach ($_POST['excluir_fotos'] as $foto_id) {
-                    $foto = fetch("SELECT arquivo FROM fotos_imovel WHERE id = ? AND imovel_id = ?", [$foto_id, $imovel_id]);
+                    $foto = fetch("SELECT arquivo FROM fotos_imovel WHERE id = ? AND imovel_id = ? AND tenant_id = ?", [$foto_id, $imovel_id, TENANT_ID]);
                     if ($foto) {
                         // Excluir arquivo físico
                         $arquivo_path = "../../uploads/imoveis/{$imovel_id}/{$foto['arquivo']}";
@@ -201,7 +203,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                         
                         // Excluir registro do banco
-                        query("DELETE FROM fotos_imovel WHERE id = ?", [$foto_id]);
+                        query("DELETE FROM fotos_imovel WHERE id = ? AND tenant_id = ?", [$foto_id, TENANT_ID]);
                     }
                 }
                 
@@ -216,8 +218,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (strpos($ordem_foto, ':') !== false) {
                         list($foto_id, $nova_ordem) = explode(':', $ordem_foto);
                         if (is_numeric($foto_id) && is_numeric($nova_ordem)) {
-                            query("UPDATE fotos_imovel SET ordem = ? WHERE id = ? AND imovel_id = ?", 
-                                  [(int)$nova_ordem, (int)$foto_id, $imovel_id]);
+                            query("UPDATE fotos_imovel SET ordem = ? WHERE id = ? AND imovel_id = ? AND tenant_id = ?", 
+                                  [(int)$nova_ordem, (int)$foto_id, $imovel_id, TENANT_ID]);
                         }
                     }
                 }
@@ -233,7 +235,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 
                 // Buscar última ordem
-                $ultima_ordem = fetch("SELECT MAX(ordem) as max_ordem FROM fotos_imovel WHERE imovel_id = ?", [$imovel_id]);
+                $ultima_ordem = fetch("SELECT MAX(ordem) as max_ordem FROM fotos_imovel WHERE imovel_id = ? AND tenant_id = ?", [$imovel_id, TENANT_ID]);
                 $ordem_atual = ($ultima_ordem['max_ordem'] ?? 0) + 1;
                 
                 foreach ($_FILES['novas_fotos']['tmp_name'] as $key => $tmp_name) {
@@ -261,7 +263,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 'imovel_id' => $imovel_id,
                                 'arquivo' => $new_filename,
                                 'legenda' => cleanInput($_POST['legendas_novas'][$key] ?? ''),
-                                'ordem' => $ordem_atual++
+                                'ordem' => $ordem_atual++,
+                                'tenant_id' => TENANT_ID
                             ]);
                         } else {
                             throw new Exception("Erro ao fazer upload do arquivo: {$filename}");
@@ -292,11 +295,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $imovel_atualizado = fetch("
                 SELECT i.*, t.nome as tipo_nome, l.cidade, l.bairro, u.nome as corretor_nome 
                 FROM imoveis i 
-                LEFT JOIN tipos_imovel t ON i.tipo_id = t.id 
-                LEFT JOIN localizacoes l ON i.localizacao_id = l.id 
-                LEFT JOIN usuarios u ON i.usuario_id = u.id 
-                WHERE i.id = ?
-            ", [$imovel_id]);
+                LEFT JOIN tipos_imovel t ON i.tipo_id = t.id AND t.tenant_id = i.tenant_id
+                LEFT JOIN localizacoes l ON i.localizacao_id = l.id AND l.tenant_id = i.tenant_id
+                LEFT JOIN usuarios u ON i.usuario_id = u.id AND u.tenant_id = i.tenant_id
+                WHERE i.id = ? AND i.tenant_id = ?
+            ", [$imovel_id, TENANT_ID]);
             
             if ($imovel_atualizado) {
                 $imovel = $imovel_atualizado;
@@ -309,8 +312,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Buscar fotos atualizadas
             $fotos_imovel = fetchAll("
-                SELECT * FROM fotos_imovel WHERE imovel_id = ? ORDER BY ordem
-            ", [$imovel_id]);
+                SELECT * FROM fotos_imovel WHERE imovel_id = ? AND tenant_id = ? ORDER BY ordem
+            ", [$imovel_id, TENANT_ID]);
             
             // Verificar se é apenas uma atualização de ordem
             if (isset($_POST['apenas_ordem']) && $_POST['apenas_ordem'] == '1') {

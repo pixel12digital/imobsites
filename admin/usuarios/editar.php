@@ -5,13 +5,14 @@ ob_start();
 // Carregar configurações ANTES de iniciar a sessão
 require_once '../../config/paths.php';
 require_once '../../config/database.php';
+require_once '../../config/tenant.php';
 require_once '../../config/config.php';
 
 // Agora iniciar a sessão
 session_start();
 
 // Verificar se o usuário está logado
-if (!isset($_SESSION['admin_logged_in']) || !$_SESSION['admin_logged_in']) {
+if (!isset($_SESSION['admin_logged_in']) || !$_SESSION['admin_logged_in'] || !isset($_SESSION['tenant_id']) || (int)$_SESSION['tenant_id'] !== TENANT_ID) {
     header('Location: ../login.php');
     exit;
 }
@@ -35,7 +36,7 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 $user_id = (int)$_GET['id'];
 
 // Buscar dados do usuário
-$usuario = fetchById('usuarios', $user_id);
+$usuario = fetch("SELECT * FROM usuarios WHERE id = ? AND tenant_id = ?", [$user_id, TENANT_ID]);
 
 if (!$usuario) {
     header('Location: index.php');
@@ -59,12 +60,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Email inválido.';
     } else {
         // Verificar se o email já existe (exceto para o usuário atual)
-        $existing_user = fetchWhere('usuarios', 'email = ? AND id != ?', [$email, $user_id]);
+        $existing_user = fetch("SELECT id FROM usuarios WHERE email = ? AND id != ? AND tenant_id = ?", [$email, $user_id, TENANT_ID]);
         if ($existing_user) {
             $error = 'Este email já está cadastrado por outro usuário.';
         } else {
             // Preparar dados para atualização
-                         $update_data = [
+            $update_data = [
                  'nome' => $nome,
                  'email' => $email,
                  'nivel' => $nivel,
@@ -84,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if (empty($error)) {
                 // Atualizar usuário
-                if (update('usuarios', $update_data, 'id = ?', [$user_id])) {
+            if (update('usuarios', $update_data, 'id = ? AND tenant_id = ?', [$user_id, TENANT_ID])) {
                     $success = 'Usuário atualizado com sucesso!';
                     
                     // Atualizar dados da sessão se for o usuário logado
@@ -95,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     
                     // Recarregar dados do usuário
-                    $usuario = fetchById('usuarios', $user_id);
+                    $usuario = fetch("SELECT * FROM usuarios WHERE id = ? AND tenant_id = ?", [$user_id, TENANT_ID]);
                 } else {
                     $error = 'Erro ao atualizar usuário. Tente novamente.';
                 }

@@ -5,12 +5,14 @@ ob_start();
 // Carregar configurações ANTES de iniciar a sessão
 require_once '../config/paths.php';
 require_once '../config/database.php';
+require_once '../config/tenant.php';
 require_once '../config/config.php';
 
 // Agora iniciar a sessão
 session_start();
 
-// Destruir todas as variáveis de sessão
+// Remover variáveis de sessão, incluindo impersonação
+unset($_SESSION['tenant_override_id'], $_SESSION['tenant_override_notice']);
 $_SESSION = array();
 
 // Se desejar destruir a sessão completamente, apague também o cookie de sessão

@@ -38,6 +38,7 @@ define('ADMIN_PATH', ROOT_PATH . '/admin');
 define('ASSETS_PATH', ROOT_PATH . '/assets');
 define('UPLOADS_PATH', ROOT_PATH . '/uploads');
 define('DATABASE_PATH', ROOT_PATH . '/database');
+define('MASTER_PATH', ROOT_PATH . '/master');
 
 // Função para obter caminho absoluto (usar com cuidado)
 function getAbsolutePath($relativePath = '') {
@@ -65,6 +66,8 @@ function getRelativePath($path = '') {
     if (strpos($script_name, '/pages/') !== false) {
         $is_subpage = true;
     } elseif (strpos($script_name, '/admin/') !== false) {
+        $is_subpage = true;
+    } elseif (strpos($script_name, '/master/') !== false) {
         $is_subpage = true;
     }
     
@@ -96,7 +99,7 @@ function getBaseUrl() {
     
     // Detectar se estamos em uma subpágina
     $is_subpage = false;
-    if (strpos($script_name, '/pages/') !== false || strpos($script_name, '/admin/') !== false) {
+    if (strpos($script_name, '/pages/') !== false || strpos($script_name, '/admin/') !== false || strpos($script_name, '/master/') !== false) {
         $is_subpage = true;
     }
     

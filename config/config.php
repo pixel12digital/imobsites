@@ -9,16 +9,15 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Configurações gerais do sistema
-define('SITE_NAME', 'JTR Imóveis');
+define('SITE_NAME', tenantSetting('site_name', 'JTR Imóveis'));
 define('SITE_URL', ''); // Será detectado automaticamente
-define('SITE_EMAIL', 'contato@jtrimoveis.com.br');
-// Número genérico removido - usando apenas números específicos para vendas e locação
+define('SITE_EMAIL', tenantSetting('site_email', 'contato@jtrimoveis.com.br'));
 
 // Números de telefone específicos por tipo de operação
-define('PHONE_VENDA', '+55 12 98863-2149');
-define('PHONE_LOCACAO', '+55 12 99126-7831');
-define('PHONE_WHATSAPP_VENDA', '5512988632149');
-define('PHONE_WHATSAPP_LOCACAO', '5512991267831');
+define('PHONE_VENDA', tenantSetting('phone_venda', '+55 12 98863-2149'));
+define('PHONE_LOCACAO', tenantSetting('phone_locacao', '+55 12 99126-7831'));
+define('PHONE_WHATSAPP_VENDA', tenantSetting('whatsapp_venda', '5512988632149'));
+define('PHONE_WHATSAPP_LOCACAO', tenantSetting('whatsapp_locacao', '5512991267831'));
 
 // Configurações de upload
 define('UPLOAD_DIR', dirname(__DIR__) . '/uploads/');

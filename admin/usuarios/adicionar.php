@@ -5,13 +5,14 @@ ob_start();
 // Carregar configurações ANTES de iniciar a sessão
 require_once '../../config/paths.php';
 require_once '../../config/database.php';
+require_once '../../config/tenant.php';
 require_once '../../config/config.php';
 
 // Agora iniciar a sessão
 session_start();
 
 // Verificar se o usuário está logado
-if (!isset($_SESSION['admin_logged_in']) || !$_SESSION['admin_logged_in']) {
+if (!isset($_SESSION['admin_logged_in']) || !$_SESSION['admin_logged_in'] || !isset($_SESSION['tenant_id']) || (int)$_SESSION['tenant_id'] !== TENANT_ID) {
     header('Location: ../login.php');
     exit;
 }
@@ -46,18 +47,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'As senhas não coincidem.';
     } else {
         // Verificar se o email já existe
-        $existing_user = fetchWhere('usuarios', 'email = ?', [$email]);
+        $existing_user = fetch("SELECT id FROM usuarios WHERE email = ? AND tenant_id = ?", [$email, TENANT_ID]);
         if ($existing_user) {
             $error = 'Este email já está cadastrado.';
         } else {
             // Preparar dados para inserção
-                         $user_data = [
+            $user_data = [
                  'nome' => $nome,
                  'email' => $email,
                  'senha' => password_hash($senha, PASSWORD_DEFAULT),
                  'nivel' => $nivel,
                  'ativo' => $ativo,
-                 'data_criacao' => date('Y-m-d H:i:s')
+                'data_criacao' => date('Y-m-d H:i:s'),
+                'tenant_id' => TENANT_ID
              ];
             
             // Inserir usuário

@@ -5,11 +5,12 @@ ob_start();
 // Carregar configurações ANTES de iniciar a sessão
 require_once '../../config/paths.php';
 require_once '../../config/database.php';
+require_once '../../config/tenant.php';
 require_once '../../config/config.php';
 
 // Verificar se o usuário está logado
 session_start();
-if (!isset($_SESSION['admin_logged_in']) || !$_SESSION['admin_logged_in']) {
+if (!isset($_SESSION['admin_logged_in']) || !$_SESSION['admin_logged_in'] || !isset($_SESSION['tenant_id']) || (int)$_SESSION['tenant_id'] !== TENANT_ID) {
     http_response_code(401);
     echo json_encode(['error' => 'Não autorizado']);
     exit;
@@ -33,7 +34,7 @@ $user_id = (int)$_GET['user_id'];
 
 try {
     // Verificar se o usuário existe
-    $usuario = fetchById('usuarios', $user_id);
+    $usuario = fetch("SELECT id FROM usuarios WHERE id = ? AND tenant_id = ?", [$user_id, TENANT_ID]);
     if (!$usuario) {
         echo json_encode(['error' => 'Usuário não encontrado']);
         exit;
@@ -41,11 +42,11 @@ try {
     
     // Verificar dependências
     $check_sql = "SELECT 
-        (SELECT COUNT(*) FROM imoveis WHERE usuario_id = ?) as total_imoveis,
-        (SELECT COUNT(*) FROM clientes WHERE usuario_id = ?) as total_clientes";
+        (SELECT COUNT(*) FROM imoveis WHERE usuario_id = ? AND tenant_id = ?) as total_imoveis,
+        (SELECT COUNT(*) FROM clientes WHERE usuario_id = ? AND tenant_id = ?) as total_clientes";
     
     $check_stmt = $pdo->prepare($check_sql);
-    $check_stmt->execute([$user_id, $user_id]);
+    $check_stmt->execute([$user_id, TENANT_ID, $user_id, TENANT_ID]);
     $dependencies = $check_stmt->fetch();
     
     $hasDependencies = ($dependencies['total_imoveis'] > 0 || $dependencies['total_clientes'] > 0);

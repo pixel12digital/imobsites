@@ -6,13 +6,14 @@ ob_start();
 $config_path = dirname(__DIR__) . '/../config/';
 require_once $config_path . 'paths.php';
 require_once $config_path . 'database.php';
+require_once $config_path . 'tenant.php';
 require_once $config_path . 'config.php';
 
 // Agora iniciar a sessão
 session_start();
 
 // Verificar se o usuário está logado
-if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true || !isset($_SESSION['tenant_id']) || (int)$_SESSION['tenant_id'] !== TENANT_ID) {
     header('Location: ../login.php');
     exit;
 }
@@ -60,7 +61,7 @@ $estados_brasil = [
 ];
 
 // Buscar dados da localização
-$localizacao = fetch("SELECT * FROM localizacoes WHERE id = ?", [$localizacao_id]);
+$localizacao = fetch("SELECT * FROM localizacoes WHERE id = ? AND tenant_id = ?", [$localizacao_id, TENANT_ID]);
 
 if (!$localizacao) {
     header('Location: index.php');
@@ -92,8 +93,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Verificar se já existe uma localização com cidade + bairro + estado (excluindo a atual)
         $existing_location = fetch(
-            "SELECT id FROM localizacoes WHERE cidade = ? AND bairro = ? AND estado = ? AND id != ?", 
-            [$cidade, $bairro, $estado, $localizacao_id]
+            "SELECT id FROM localizacoes WHERE cidade = ? AND bairro = ? AND estado = ? AND id != ? AND tenant_id = ?", 
+            [$cidade, $bairro, $estado, $localizacao_id, TENANT_ID]
         );
         
         if ($existing_location) {
@@ -109,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ];
         
         // Atualizar localização
-        $updated = update("localizacoes", $dados_localizacao, $localizacao_id);
+        $updated = update("localizacoes", $dados_localizacao, "id = ? AND tenant_id = ?", [$localizacao_id, TENANT_ID]);
         
         if ($updated) {
             $success_message = "Localização atualizada com sucesso!";
@@ -126,8 +127,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Buscar estatísticas da localização
-$imoveis_count = fetch("SELECT COUNT(*) as total FROM imoveis WHERE localizacao_id = ?", [$localizacao_id]);
-$imoveis_list = fetchAll("SELECT id, titulo, preco, status FROM imoveis WHERE localizacao_id = ? ORDER BY data_criacao DESC LIMIT 5", [$localizacao_id]);
+$imoveis_count = fetch("SELECT COUNT(*) as total FROM imoveis WHERE localizacao_id = ? AND tenant_id = ?", [$localizacao_id, TENANT_ID]);
+$imoveis_list = fetchAll("SELECT id, titulo, preco, status FROM imoveis WHERE localizacao_id = ? AND tenant_id = ? ORDER BY data_criacao DESC LIMIT 5", [$localizacao_id, TENANT_ID]);
 ?>
 
 <!DOCTYPE html>

@@ -5,13 +5,14 @@ ob_start();
 // Carregar configurações ANTES de iniciar a sessão
 require_once '../../config/paths.php';
 require_once '../../config/database.php';
+require_once '../../config/tenant.php';
 require_once '../../config/config.php';
 
 // Agora iniciar a sessão
 session_start();
 
 // Verificar se o usuário está logado
-if (!isset($_SESSION['admin_logged_in']) || !$_SESSION['admin_logged_in']) {
+if (!isset($_SESSION['admin_logged_in']) || !$_SESSION['admin_logged_in'] || !isset($_SESSION['tenant_id']) || (int)$_SESSION['tenant_id'] !== TENANT_ID) {
     header('Location: ../login.php');
     exit;
 }
@@ -26,7 +27,8 @@ if ($_SESSION['admin_nivel'] !== 'admin') {
 if (isset($_POST['delete_contact']) && isset($_POST['contact_id'])) {
     $contact_id = (int)$_POST['contact_id'];
     
-    if (delete('contatos', 'id = ?', [$contact_id])) {
+    $delete_stmt = query("DELETE FROM contatos WHERE id = ? AND tenant_id = ?", [$contact_id, TENANT_ID]);
+    if ($delete_stmt && $delete_stmt->rowCount() > 0) {
         $success = 'Contato excluído com sucesso.';
     } else {
         $error = 'Erro ao excluir contato.';
@@ -39,7 +41,7 @@ if (isset($_POST['toggle_status']) && isset($_POST['contact_id'])) {
     $current_status = $_POST['current_status'];
     $new_status = ($current_status === 'lido') ? 'nao_lido' : 'lido';
     
-    if (update('contatos', ['status' => $new_status], 'id = ?', [$contact_id])) {
+    if (update('contatos', ['status' => $new_status], 'id = ? AND tenant_id = ?', [$contact_id, TENANT_ID])) {
         $success = 'Status do contato atualizado com sucesso.';
     } else {
         $error = 'Erro ao atualizar status do contato.';
@@ -54,15 +56,18 @@ $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $per_page = 20;
 $offset = ($page - 1) * $per_page;
 
-$where_clause = '';
-$params = [];
+$where_clause = 'WHERE tenant_id = ?';
+$params = [TENANT_ID];
 
 if ($search || $status_filter || $tipo_filter) {
     $conditions = [];
     
     if ($search) {
         $conditions[] = "(nome LIKE ? OR email LIKE ? OR telefone LIKE ? OR mensagem LIKE ?)";
-        $params = array_merge($params, ["%{$search}%", "%{$search}%", "%{$search}%", "%{$search}%"]);
+        $params[] = "%{$search}%";
+        $params[] = "%{$search}%";
+        $params[] = "%{$search}%";
+        $params[] = "%{$search}%";
     }
     
     if ($status_filter) {
@@ -75,7 +80,7 @@ if ($search || $status_filter || $tipo_filter) {
         $params[] = $tipo_filter;
     }
     
-    $where_clause = "WHERE " . implode(' AND ', $conditions);
+    $where_clause .= " AND " . implode(' AND ', $conditions);
 }
 
 // Contar total de contatos
@@ -100,9 +105,10 @@ $stats_sql = "SELECT
     COUNT(*) as total,
     SUM(CASE WHEN status = 'nao_lido' THEN 1 ELSE 0 END) as nao_lidos,
     SUM(CASE WHEN status = 'lido' THEN 1 ELSE 0 END) as lidos
-FROM contatos";
+FROM contatos
+WHERE tenant_id = ?";
 $stats_stmt = $pdo->prepare($stats_sql);
-$stats_stmt->execute();
+$stats_stmt->execute([TENANT_ID]);
 $stats = $stats_stmt->fetch();
 ?>
 

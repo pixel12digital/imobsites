@@ -5,13 +5,14 @@ ob_start();
 // Carregar configurações ANTES de iniciar a sessão
 require_once '../../config/paths.php';
 require_once '../../config/database.php';
+require_once '../../config/tenant.php';
 require_once '../../config/config.php';
 
 // Agora iniciar a sessão
 session_start();
 
 // Verificar se o usuário está logado
-if (!isset($_SESSION['admin_logged_in']) || !$_SESSION['admin_logged_in']) {
+if (!isset($_SESSION['admin_logged_in']) || !$_SESSION['admin_logged_in'] || !isset($_SESSION['tenant_id']) || (int)$_SESSION['tenant_id'] !== TENANT_ID) {
     header('Location: ../login.php');
     exit;
 }
@@ -32,22 +33,22 @@ if (isset($_POST['delete_user']) && isset($_POST['user_id'])) {
     } else {
         try {
             // Verificar se o usuário existe
-            $usuario_existe = fetchById('usuarios', $user_id);
+            $usuario_existe = fetch("SELECT * FROM usuarios WHERE id = ? AND tenant_id = ?", [$user_id, TENANT_ID]);
             if (!$usuario_existe) {
                 $error = 'Usuário não encontrado.';
             } else {
                 // Verificar se o usuário pode ser excluído (sem registros dependentes)
                 $check_sql = "SELECT 
-                    (SELECT COUNT(*) FROM imoveis WHERE usuario_id = ?) as total_imoveis,
-                    (SELECT COUNT(*) FROM clientes WHERE usuario_id = ?) as total_clientes";
+                    (SELECT COUNT(*) FROM imoveis WHERE usuario_id = ? AND tenant_id = ?) as total_imoveis,
+                    (SELECT COUNT(*) FROM clientes WHERE usuario_id = ? AND tenant_id = ?) as total_clientes";
                 
                 $check_stmt = $pdo->prepare($check_sql);
-                $check_stmt->execute([$user_id, $user_id]);
+                $check_stmt->execute([$user_id, TENANT_ID, $user_id, TENANT_ID]);
                 $dependencies = $check_stmt->fetch();
                 
                 if ($dependencies['total_imoveis'] > 0 || $dependencies['total_clientes'] > 0) {
                     // Se há dependências, apenas desativar o usuário
-                    if (update('usuarios', ['ativo' => 0], 'id = ?', [$user_id])) {
+                    if (update('usuarios', ['ativo' => 0], 'id = ? AND tenant_id = ?', [$user_id, TENANT_ID])) {
                         $success = 'Usuário <strong>' . htmlspecialchars($usuario_existe['nome']) . '</strong> foi <strong>desativado</strong> com sucesso. ' .
                                  'Não foi possível excluí-lo permanentemente devido a ' . 
                                  $dependencies['total_imoveis'] . ' imóveis e ' . $dependencies['total_clientes'] . ' clientes associados.';
@@ -56,10 +57,10 @@ if (isset($_POST['delete_user']) && isset($_POST['user_id'])) {
                     }
                 } else {
                     // Se não há dependências, excluir o usuário permanentemente
-                    $delete_sql = "DELETE FROM usuarios WHERE id = ?";
+                    $delete_sql = "DELETE FROM usuarios WHERE id = ? AND tenant_id = ?";
                     $delete_stmt = $pdo->prepare($delete_sql);
                     
-                    if ($delete_stmt->execute([$user_id])) {
+                    if ($delete_stmt->execute([$user_id, TENANT_ID])) {
                         $rows_affected = $delete_stmt->rowCount();
                         if ($rows_affected > 0) {
                             $success = 'Usuário <strong>' . htmlspecialchars($usuario_existe['nome']) . '</strong> foi <strong>excluído permanentemente</strong> com sucesso.';
@@ -85,12 +86,13 @@ $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $per_page = 20;
 $offset = ($page - 1) * $per_page;
 
-$where_clause = '';
-$search_params = [];
+$where_clause = 'WHERE tenant_id = ?';
+$search_params = [TENANT_ID];
 
 if ($search) {
-    $where_clause = "WHERE nome LIKE ? OR email LIKE ?";
-    $search_params = ["%{$search}%", "%{$search}%"];
+    $where_clause .= " AND (nome LIKE ? OR email LIKE ?)";
+    $search_params[] = "%{$search}%";
+    $search_params[] = "%{$search}%";
 }
 
 // Contar total de usuários

@@ -5,13 +5,14 @@ ob_start();
 // Carregar configurações ANTES de iniciar a sessão
 require_once '../../config/paths.php';
 require_once '../../config/database.php';
+require_once '../../config/tenant.php';
 require_once '../../config/config.php';
 
 // Agora iniciar a sessão
 session_start();
 
 // Verificar se o usuário está logado
-if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true || !isset($_SESSION['tenant_id']) || (int)$_SESSION['tenant_id'] !== TENANT_ID) {
     header('Location: ../login.php');
     exit;
 }
@@ -22,11 +23,11 @@ if (isset($_POST['excluir']) && isset($_POST['imovel_id'])) {
     
     try {
         // Excluir fotos primeiro (devido à foreign key)
-        query("DELETE FROM fotos_imovel WHERE imovel_id = ?", [$imovel_id]);
-        query("DELETE FROM imovel_caracteristicas WHERE imovel_id = ?", [$imovel_id]);
+        query("DELETE FROM fotos_imovel WHERE imovel_id = ? AND tenant_id = ?", [$imovel_id, TENANT_ID]);
+        query("DELETE FROM imovel_caracteristicas WHERE imovel_id = ? AND tenant_id = ?", [$imovel_id, TENANT_ID]);
         
         // Excluir o imóvel
-        query("DELETE FROM imoveis WHERE id = ?", [$imovel_id]);
+        query("DELETE FROM imoveis WHERE id = ? AND tenant_id = ?", [$imovel_id, TENANT_ID]);
         
         $success_message = "Imóvel excluído com sucesso!";
     } catch (Exception $e) {
@@ -40,7 +41,7 @@ if (isset($_POST['alterar_status']) && isset($_POST['imovel_id']) && isset($_POS
     $novo_status = cleanInput($_POST['novo_status']);
     
     try {
-        query("UPDATE imoveis SET status = ? WHERE id = ?", [$novo_status, $imovel_id]);
+        query("UPDATE imoveis SET status = ? WHERE id = ? AND tenant_id = ?", [$novo_status, $imovel_id, TENANT_ID]);
         $success_message = "Status alterado com sucesso!";
     } catch (Exception $e) {
         $error_message = "Erro ao alterar status: " . $e->getMessage();
@@ -52,10 +53,10 @@ if (isset($_POST['alterar_destaque']) && isset($_POST['imovel_id'])) {
     $imovel_id = (int)$_POST['imovel_id'];
     
     try {
-        $imovel = fetch("SELECT destaque FROM imoveis WHERE id = ?", [$imovel_id]);
+        $imovel = fetch("SELECT destaque FROM imoveis WHERE id = ? AND tenant_id = ?", [$imovel_id, TENANT_ID]);
         $novo_destaque = $imovel['destaque'] ? 0 : 1;
         
-        query("UPDATE imoveis SET destaque = ? WHERE id = ?", [$novo_destaque, $imovel_id]);
+        query("UPDATE imoveis SET destaque = ? WHERE id = ? AND tenant_id = ?", [$novo_destaque, $imovel_id, TENANT_ID]);
         $success_message = "Destaque alterado com sucesso!";
     } catch (Exception $e) {
         $error_message = "Erro ao alterar destaque: " . $e->getMessage();
@@ -76,12 +77,12 @@ $busca = isset($_GET['busca']) ? cleanInput($_GET['busca']) : '';
 // Construir query
 $sql = "SELECT i.*, t.nome as tipo_nome, l.cidade, l.bairro, u.nome as corretor_nome 
         FROM imoveis i 
-        LEFT JOIN tipos_imovel t ON i.tipo_id = t.id 
-        LEFT JOIN localizacoes l ON i.localizacao_id = l.id 
-        LEFT JOIN usuarios u ON i.usuario_id = u.id 
-        WHERE 1=1";
+        LEFT JOIN tipos_imovel t ON i.tipo_id = t.id AND t.tenant_id = i.tenant_id
+        LEFT JOIN localizacoes l ON i.localizacao_id = l.id AND l.tenant_id = i.tenant_id
+        LEFT JOIN usuarios u ON i.usuario_id = u.id AND u.tenant_id = i.tenant_id
+        WHERE i.tenant_id = ?";
 
-$params = [];
+$params = [TENANT_ID];
 
 if ($filtro_status) {
     $sql .= " AND i.status = ?";
@@ -108,18 +109,47 @@ if ($busca) {
 
 $sql .= " ORDER BY i.data_criacao DESC LIMIT " . (int)$por_pagina . " OFFSET " . (int)$offset;
 
-$imoveis = fetchAll($sql, []);
+$imoveis = fetchAll($sql, $params);
 
 // Total de registros para paginação
-$sql_count = str_replace("SELECT i.*, t.nome as tipo_nome, l.cidade, l.bairro, u.nome as corretor_nome", "SELECT COUNT(*) as total", $sql);
-$sql_count = preg_replace('/ORDER BY.*LIMIT.*OFFSET.*/', '', $sql_count);
-$result_count = fetch($sql_count, $params);
+$sql_count = "SELECT COUNT(*) as total FROM imoveis WHERE tenant_id = ?";
+$count_params = [TENANT_ID];
+
+if ($filtro_status) {
+    $sql_count .= " AND status = ?";
+    $count_params[] = $filtro_status;
+}
+
+if ($filtro_tipo) {
+    $sql_count .= " AND tipo_id = ?";
+    $count_params[] = $filtro_tipo;
+}
+
+if ($filtro_cidade) {
+    $sql_count .= " AND localizacao_id IN (SELECT id FROM localizacoes WHERE tenant_id = ? AND cidade LIKE ?)";
+    $count_params[] = TENANT_ID;
+    $count_params[] = "%$filtro_cidade%";
+}
+
+if ($busca) {
+    $sql_count .= " AND (titulo LIKE ? OR descricao LIKE ? OR id IN (
+        SELECT imovel_id FROM localizacoes l
+        WHERE l.tenant_id = ? AND l.bairro LIKE ?
+    ))";
+    $searchTerm = "%$busca%";
+    $count_params[] = $searchTerm;
+    $count_params[] = $searchTerm;
+    $count_params[] = TENANT_ID;
+    $count_params[] = $searchTerm;
+}
+
+$result_count = fetch($sql_count, $count_params);
 $total_imoveis = $result_count ? $result_count['total'] : 0;
 $total_paginas = ceil($total_imoveis / $por_pagina);
 
 // Buscar tipos e cidades para filtros
-$tipos_imovel = fetchAll("SELECT id, nome FROM tipos_imovel ORDER BY nome");
-$cidades = fetchAll("SELECT DISTINCT cidade FROM localizacoes ORDER BY cidade");
+$tipos_imovel = fetchAll("SELECT id, nome FROM tipos_imovel WHERE tenant_id = ? ORDER BY nome", [TENANT_ID]);
+$cidades = fetchAll("SELECT DISTINCT cidade FROM localizacoes WHERE tenant_id = ? ORDER BY cidade", [TENANT_ID]);
 ?>
 
 <!DOCTYPE html>

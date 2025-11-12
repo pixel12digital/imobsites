@@ -5,33 +5,35 @@ ob_start();
 // Carregar configurações ANTES de iniciar a sessão
 require_once '../config/paths.php';
 require_once '../config/database.php';
+require_once '../config/tenant.php';
 require_once '../config/config.php';
 
 // Agora iniciar a sessão
 session_start();
 
 // Verificar se o usuário está logado
-if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true || !isset($_SESSION['tenant_id']) || (int)$_SESSION['tenant_id'] !== TENANT_ID) {
     header('Location: login.php');
     exit;
 }
 
 // Buscar estatísticas para o dashboard
-$total_imoveis = fetch("SELECT COUNT(*) as total FROM imoveis")['total'];
-$total_usuarios = fetch("SELECT COUNT(*) as total FROM usuarios")['total'];
+$total_imoveis = fetch("SELECT COUNT(*) as total FROM imoveis WHERE tenant_id = ?", [TENANT_ID])['total'];
+$total_usuarios = fetch("SELECT COUNT(*) as total FROM usuarios WHERE tenant_id = ?", [TENANT_ID])['total'];
     // $total_contatos = fetch("SELECT COUNT(*) as total FROM contatos")['total'];
     $total_contatos = 0; // Valor fixo para evitar erros
-$imoveis_destaque = fetch("SELECT COUNT(*) as total FROM imoveis WHERE destaque = 1")['total'];
+$imoveis_destaque = fetch("SELECT COUNT(*) as total FROM imoveis WHERE destaque = 1 AND tenant_id = ?", [TENANT_ID])['total'];
 
 // Buscar imóveis recentes
 $imoveis_recentes = fetchAll("
     SELECT i.*, t.nome as tipo_nome, l.cidade, l.bairro 
     FROM imoveis i 
-    LEFT JOIN tipos_imovel t ON i.tipo_id = t.id 
-    LEFT JOIN localizacoes l ON i.localizacao_id = l.id 
+    LEFT JOIN tipos_imovel t ON i.tipo_id = t.id AND t.tenant_id = i.tenant_id
+    LEFT JOIN localizacoes l ON i.localizacao_id = l.id AND l.tenant_id = i.tenant_id
+    WHERE i.tenant_id = ?
     ORDER BY i.data_criacao DESC 
     LIMIT 5
-");
+", [TENANT_ID]);
 
     // Buscar contatos recentes - Ocultado temporariamente
     /*

@@ -1,15 +1,13 @@
 <?php
-// Configuração SEMPRE para banco remoto do Hostinger
-// Este projeto usa exclusivamente o banco remoto para dev e produção
-
-// Configurações do banco de dados REMOTO (Hostinger)
-define('DB_HOST', 'auth-db791.hstgr.io');
-define('DB_NAME', 'u891304621_jtrimoveis');
-define('DB_USER', 'u891304621_jtrimoveis');
-define('DB_PASS', 'Los@ngo#081081');
+// Configuração para ambiente local (XAMPP/WAMP)
+// Ajuste as credenciais abaixo conforme o seu MySQL local
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'imobsites');
+define('DB_USER', 'root');
+define('DB_PASS', '');
 
 // Log para debug
-error_log('[JTR Imóveis] SEMPRE usando banco REMOTO - Host: ' . DB_HOST . ' - Database: ' . DB_NAME);
+error_log('[JTR Imóveis] Usando banco LOCAL - Host: ' . DB_HOST . ' - Database: ' . DB_NAME);
 
 try {
     // Conexão com timeout otimizado para conexões remotas
@@ -25,21 +23,18 @@ try {
     // Tornar a variável $pdo global
     global $pdo;
     
-    error_log('[JTR Imóveis] Conexão com banco REMOTO estabelecida com sucesso');
+    error_log('[JTR Imóveis] Conexão com banco LOCAL estabelecida com sucesso');
 
 } catch(PDOException $e) {
-    $error_msg = "Erro na conexão com o banco REMOTO: " . $e->getMessage();
+    $error_msg = "Erro na conexão com o banco LOCAL: " . $e->getMessage();
     error_log('[JTR Imóveis] ' . $error_msg);
 
     // Em caso de erro, mostrar mensagem detalhada para debug
     die("Erro crítico: " . $error_msg . "<br><br>
          <strong>Verifique:</strong><br>
+         - Se o servidor MySQL local está rodando<br>
          - Se o host <strong>" . DB_HOST . "</strong> está acessível<br>
-         - Se as credenciais estão corretas<br>
-         - Se há restrições de IP no Hostinger<br>
-         - Se o servidor MySQL está rodando<br>
-         <br>
-         <a href='test_banco_remoto.php'>🧪 Testar Conexão</a>");
+         - Se as credenciais estão corretas<br>");
 }
 
 // Função para executar queries

@@ -6,13 +6,14 @@ ob_start();
 $config_path = dirname(__DIR__) . '/../config/';
 require_once $config_path . 'paths.php';
 require_once $config_path . 'database.php';
+require_once $config_path . 'tenant.php';
 require_once $config_path . 'config.php';
 
 // Agora iniciar a sessão
 session_start();
 
 // Verificar se o usuário está logado
-if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true || !isset($_SESSION['tenant_id']) || (int)$_SESSION['tenant_id'] !== TENANT_ID) {
     header('Location: ../login.php');
     exit;
 }
@@ -27,9 +28,9 @@ $error_message = '';
     error_log("DEBUG LOAD: cleanInput existe? " . (function_exists('cleanInput') ? 'SIM' : 'NÃO'));
 
 // Buscar dados para os selects
-$tipos_imovel = fetchAll("SELECT * FROM tipos_imovel ORDER BY nome");
-$localizacoes = fetchAll("SELECT * FROM localizacoes ORDER BY estado, cidade, bairro");
-$usuarios = fetchAll("SELECT * FROM usuarios WHERE ativo = 1 ORDER BY nome");
+$tipos_imovel = fetchAll("SELECT * FROM tipos_imovel WHERE tenant_id = ? ORDER BY nome", [TENANT_ID]);
+$localizacoes = fetchAll("SELECT * FROM localizacoes WHERE tenant_id = ? ORDER BY estado, cidade, bairro", [TENANT_ID]);
+$usuarios = fetchAll("SELECT * FROM usuarios WHERE ativo = 1 AND tenant_id = ? ORDER BY nome", [TENANT_ID]);
 $caracteristicas = fetchAll("SELECT * FROM caracteristicas ORDER BY nome");
 
 // Array de estados brasileiros para cadastro rápido
@@ -134,7 +135,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'banheiros' => !empty($_POST['banheiros']) ? (int)$_POST['banheiros'] : null,
             'vagas' => !empty($_POST['vagas_garagem']) ? (int)$_POST['vagas_garagem'] : null,
             'endereco' => cleanInput($_POST['endereco']),
-            'data_criacao' => date('Y-m-d H:i:s')
+            'data_criacao' => date('Y-m-d H:i:s'),
+            'tenant_id' => TENANT_ID
         ];
         
         // Inserir imóvel
@@ -157,7 +159,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 foreach ($_POST['caracteristicas'] as $caracteristica_id) {
                     insert("imovel_caracteristicas", [
                         'imovel_id' => $imovel_id,
-                        'caracteristica_id' => (int)$caracteristica_id
+                        'caracteristica_id' => (int)$caracteristica_id,
+                        'tenant_id' => TENANT_ID
                     ]);
                 }
             }
@@ -231,7 +234,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 'imovel_id' => $imovel_id,
                                 'arquivo' => $new_filename,
                                 'legenda' => cleanInput($_POST['legendas'][$key] ?? ''),
-                                'ordem' => $key + 1
+                                'ordem' => $key + 1,
+                                'tenant_id' => TENANT_ID
                             ];
                             error_log("DEBUG UPLOAD: Dados para inserção: " . print_r($foto_data, true));
                             

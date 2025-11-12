@@ -6,13 +6,14 @@ ob_start();
 $config_path = dirname(__DIR__) . '/../config/';
 require_once $config_path . 'paths.php';
 require_once $config_path . 'database.php';
+require_once $config_path . 'tenant.php';
 require_once $config_path . 'config.php';
 
 // Agora iniciar a sessão
 session_start();
 
 // Verificar se o usuário está logado
-if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true || !isset($_SESSION['tenant_id']) || (int)$_SESSION['tenant_id'] !== TENANT_ID) {
     header('Location: ../login.php');
     exit;
 }
@@ -76,8 +77,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Verificar se já existe uma localização com cidade + bairro + estado
         $existing_location = fetch(
-            "SELECT id FROM localizacoes WHERE cidade = ? AND bairro = ? AND estado = ?", 
-            [$cidade, $bairro, $estado]
+            "SELECT id FROM localizacoes WHERE cidade = ? AND bairro = ? AND estado = ? AND tenant_id = ?", 
+            [$cidade, $bairro, $estado, TENANT_ID]
         );
         
         if ($existing_location) {
@@ -89,7 +90,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'cidade' => $cidade,
             'bairro' => $bairro,
             'estado' => $estado,
-            'cep' => $cep
+            'cep' => $cep,
+            'tenant_id' => TENANT_ID
         ];
         
         // Inserir localização

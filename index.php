@@ -4,6 +4,7 @@ ob_start();
 
 require_once 'config/paths.php';
 require_once 'config/database.php';
+require_once 'config/tenant.php';
 require_once 'config/config.php';
 session_start();
 

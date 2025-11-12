@@ -5,13 +5,14 @@ ob_start();
 // Carregar configurações ANTES de iniciar a sessão
 require_once '../../config/paths.php';
 require_once '../../config/database.php';
+require_once '../../config/tenant.php';
 require_once '../../config/config.php';
 
 // Agora iniciar a sessão
 session_start();
 
 // Verificar se o usuário está logado
-if (!isset($_SESSION['admin_logged_in']) || !$_SESSION['admin_logged_in']) {
+if (!isset($_SESSION['admin_logged_in']) || !$_SESSION['admin_logged_in'] || !isset($_SESSION['tenant_id']) || (int)$_SESSION['tenant_id'] !== TENANT_ID) {
     header('Location: ../login.php');
     exit;
 }
@@ -31,7 +32,7 @@ $contatos = [];
 if (isset($_POST['mark_as_read']) && isset($_POST['contact_id'])) {
     $contact_id = (int)$_POST['contact_id'];
     
-    if (update('contatos', ['status' => 'lido'], 'id = ?', [$contact_id])) {
+    if (update('contatos', ['status' => 'lido'], 'id = ? AND tenant_id = ?', [$contact_id, TENANT_ID])) {
         $success = 'Contato marcado como lido.';
     } else {
         $error = 'Erro ao atualizar status do contato.';
@@ -41,7 +42,7 @@ if (isset($_POST['mark_as_read']) && isset($_POST['contact_id'])) {
 // Se foi passado um ID específico, mostrar apenas esse contato
 if (isset($_GET['id']) && !empty($_GET['id'])) {
     $contact_id = (int)$_GET['id'];
-    $contato = fetch('contatos', 'id = ?', [$contact_id]);
+    $contato = fetch("SELECT * FROM contatos WHERE id = ? AND tenant_id = ?", [$contact_id, TENANT_ID]);
     
     if (!$contato) {
         header('Location: index.php');
@@ -50,7 +51,7 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
     
     // Marcar como lido automaticamente ao visualizar
     if ($contato['status'] === 'nao_lido') {
-        update('contatos', ['status' => 'lido'], 'id = ?', [$contact_id]);
+        update('contatos', ['status' => 'lido'], 'id = ? AND tenant_id = ?', [$contact_id, TENANT_ID]);
         $contato['status'] = 'lido';
     }
 } else {
@@ -61,15 +62,18 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
     $per_page = 50;
     $offset = ($page - 1) * $per_page;
 
-    $where_clause = '';
-    $params = [];
+    $where_clause = 'WHERE tenant_id = ?';
+    $params = [TENANT_ID];
 
     if ($search || $status_filter) {
         $conditions = [];
         
         if ($search) {
             $conditions[] = "(nome LIKE ? OR email LIKE ? OR telefone LIKE ? OR mensagem LIKE ?)";
-            $params = array_merge($params, ["%{$search}%", "%{$search}%", "%{$search}%", "%{$search}%"]);
+            $params[] = "%{$search}%";
+            $params[] = "%{$search}%";
+            $params[] = "%{$search}%";
+            $params[] = "%{$search}%";
         }
         
         if ($status_filter) {
@@ -77,7 +81,7 @@ if (isset($_GET['id']) && !empty($_GET['id'])) {
             $params[] = $status_filter;
         }
         
-        $where_clause = "WHERE " . implode(' AND ', $conditions);
+        $where_clause .= " AND " . implode(' AND ', $conditions);
     }
 
     // Contar total de contatos

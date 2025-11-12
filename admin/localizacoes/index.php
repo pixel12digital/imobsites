@@ -6,13 +6,14 @@ ob_start();
 $config_path = dirname(__DIR__) . '/../config/';
 require_once $config_path . 'paths.php';
 require_once $config_path . 'database.php';
+require_once $config_path . 'tenant.php';
 require_once $config_path . 'config.php';
 
 // Agora iniciar a sessão
 session_start();
 
 // Verificar se o usuário está logado
-if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true || !isset($_SESSION['tenant_id']) || (int)$_SESSION['tenant_id'] !== TENANT_ID) {
     header('Location: ../login.php');
     exit;
 }
@@ -25,18 +26,25 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
     $id = (int)$_GET['delete'];
     
     try {
-        // Verificar se há imóveis usando esta localização
-        $imoveis_count = fetch("SELECT COUNT(*) as total FROM imoveis WHERE localizacao_id = ?", [$id]);
-        
-        if ($imoveis_count['total'] > 0) {
-            $error_message = "Não é possível excluir esta localização pois existem " . $imoveis_count['total'] . " imóvel(is) cadastrado(s) nela.";
+        // Verificar se a localização pertence ao tenant
+        $localizacao = fetch("SELECT id FROM localizacoes WHERE id = ? AND tenant_id = ?", [$id, TENANT_ID]);
+
+        if (!$localizacao) {
+            $error_message = "Localização não encontrada ou não pertence a este cliente.";
         } else {
-            // Excluir localização
-            $deleted = delete("localizacoes", $id);
-            if ($deleted) {
-                $success_message = "Localização excluída com sucesso!";
+            // Verificar se há imóveis usando esta localização
+            $imoveis_count = fetch("SELECT COUNT(*) as total FROM imoveis WHERE localizacao_id = ? AND tenant_id = ?", [$id, TENANT_ID]);
+            
+            if ($imoveis_count['total'] > 0) {
+                $error_message = "Não é possível excluir esta localização pois existem " . $imoveis_count['total'] . " imóvel(is) cadastrado(s) nela.";
             } else {
-                $error_message = "Erro ao excluir localização.";
+                // Excluir localização
+                $deleted_stmt = query("DELETE FROM localizacoes WHERE id = ? AND tenant_id = ?", [$id, TENANT_ID]);
+                if ($deleted_stmt && $deleted_stmt->rowCount() > 0) {
+                    $success_message = "Localização excluída com sucesso!";
+                } else {
+                    $error_message = "Erro ao excluir localização.";
+                }
             }
         }
     } catch (Exception $e) {
@@ -45,11 +53,11 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
 }
 
 // Buscar todas as localizações
-$localizacoes = fetchAll("SELECT * FROM localizacoes ORDER BY estado, cidade, bairro");
+$localizacoes = fetchAll("SELECT * FROM localizacoes WHERE tenant_id = ? ORDER BY estado, cidade, bairro", [TENANT_ID]);
 
 // Buscar estatísticas
 $total_localizacoes = count($localizacoes);
-$estados_unicos = fetchAll("SELECT DISTINCT estado FROM localizacoes ORDER BY estado");
+$estados_unicos = fetchAll("SELECT DISTINCT estado FROM localizacoes WHERE tenant_id = ? ORDER BY estado", [TENANT_ID]);
 $total_estados = count($estados_unicos);
 ?>
 
@@ -181,7 +189,7 @@ $total_estados = count($estados_unicos);
                                         <?php foreach ($localizacoes as $localizacao): ?>
                                             <?php
                                             // Contar imóveis nesta localização
-                                            $imoveis_count = fetch("SELECT COUNT(*) as total FROM imoveis WHERE localizacao_id = ?", [$localizacao['id']]);
+                                            $imoveis_count = fetch("SELECT COUNT(*) as total FROM imoveis WHERE localizacao_id = ? AND tenant_id = ?", [$localizacao['id'], TENANT_ID]);
                                             ?>
                                             <tr>
                                                 <td><span class="badge bg-secondary">#<?php echo $localizacao['id']; ?></span></td>
