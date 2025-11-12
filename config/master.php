@@ -29,9 +29,9 @@ if (!defined('MASTER_ALLOWED_DOMAINS')) {
 }
 
 // Credenciais de acesso ao painel master
-define('MASTER_EMAIL', 'master@imobsites.com');
+define('MASTER_EMAIL', 'admin@imobsites.com.br');
 // Gere o hash com password_hash('sua_senha', PASSWORD_DEFAULT)
-define('MASTER_PASSWORD_HASH', '$2y$10$qaeWeUDMSfzRTQMK2PZv7.7VHVXaqRkxwOoHDxmapWBTCn3YRmLhW'); // senha padrão: Master@123
+define('MASTER_PASSWORD_HASH', '$2y$10$xAUIDEOA9VqYm7hWMqYTpeZkQfOis0b5TYe0kqtDzaPg8kxSFn/Wm'); // senha padrão: Los@ngo#081081
 
 if (!function_exists('normalizeDomain')) {
     function normalizeDomain(string $host): string
