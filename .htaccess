@@ -60,18 +60,9 @@ Options -Indexes
     Deny from all
 </Files>
 
-# Configurações de upload (apenas se permitido pelo servidor)
-<IfModule mod_php.c>
-    php_value upload_max_filesize 10M
-    php_value post_max_size 10M
-    php_value max_execution_time 300
-    php_value max_input_time 300
-    
-    # Configurações de sessão
-    php_value session.cookie_httponly 1
-    php_value session.cookie_secure 0
-    php_value session.use_strict_mode 1
-</IfModule>
+# Configurações de upload
+# Observação: em hospedagens compartilhadas, as diretivas php_value podem gerar 403.
+# Ajuste esses valores via php.ini ou MultiPHP INI Editor quando necessário.
 
 # URLs amigáveis (comentadas para desenvolvimento)
 # Descomente quando estiver em produção e mod_rewrite estiver funcionando

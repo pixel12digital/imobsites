@@ -1,10 +1,10 @@
 <?php
-// Configuração para ambiente local (XAMPP/WAMP)
-// Ajuste as credenciais abaixo conforme o seu MySQL local
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'imobsites');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+// Configuração para banco remoto (produção/dev)
+// Ajuste as credenciais abaixo conforme o seu MySQL remoto
+define('DB_HOST', 'r225us.hmservers.net');
+define('DB_NAME', 'imobsitescom_imobsites');
+define('DB_USER', 'imobsitescom_imobsites');
+define('DB_PASS', 'Los@ngo#081081');
 
 // Log para debug
 error_log('[JTR Imóveis] Usando banco LOCAL - Host: ' . DB_HOST . ' - Database: ' . DB_NAME);
