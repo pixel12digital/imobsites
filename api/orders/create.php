@@ -15,9 +15,28 @@ require_once __DIR__ . '/../../master/includes/OrderService.php';
 require_once __DIR__ . '/../../master/includes/PlanService.php';
 require_once __DIR__ . '/../../master/includes/AsaasPaymentService.php';
 
+// CORS para permitir o checkout do domínio público
+$allowedOrigin = 'https://imobsites.com.br';
+
+if (isset($_SERVER['HTTP_ORIGIN']) && $_SERVER['HTTP_ORIGIN'] === $allowedOrigin) {
+    header('Access-Control-Allow-Origin: ' . $allowedOrigin);
+} else {
+    // Se preferir liberar tudo durante desenvolvimento, usar:
+    // header('Access-Control-Allow-Origin: *');
+    header('Access-Control-Allow-Origin: ' . $allowedOrigin);
+}
+
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
 header('Content-Type: application/json; charset=utf-8');
 
-error_log('[orders.create] endpoint chamado');
+// Resposta imediata para preflight CORS
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
+    http_response_code(204); // No Content
+    exit;
+}
+
+error_log('[orders.create] endpoint chamado - method=' . ($_SERVER['REQUEST_METHOD'] ?? 'UNKNOWN'));
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
