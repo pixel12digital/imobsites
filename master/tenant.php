@@ -11,6 +11,23 @@ if (!isset($_SESSION['master_logged_in']) || $_SESSION['master_logged_in'] !== t
     exit;
 }
 
+if (!function_exists('isAjaxRequest')) {
+    function isAjaxRequest(): bool
+    {
+        return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+    }
+}
+
+if (!function_exists('sendJsonResponse')) {
+    function sendJsonResponse(array $payload, int $statusCode = 200): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        http_response_code($statusCode);
+        echo json_encode($payload);
+        exit;
+    }
+}
+
 $tenants_all = fetchAll("SELECT id, name FROM tenants ORDER BY name ASC");
 
 if (empty($tenants_all)) {
@@ -188,8 +205,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_tenant'])) {
 
         $tenant = fetch("SELECT * FROM tenants WHERE id = ?", [$tenant_id]);
         $_POST = [];
+        if (isAjaxRequest()) {
+            sendJsonResponse([
+                'status' => 'success',
+                'action' => 'update_tenant',
+                'message' => 'Informações do cliente atualizadas com sucesso.',
+                'tenant' => $tenant
+            ]);
+        }
         $success = 'Informações do cliente atualizadas com sucesso.';
     } catch (Exception $e) {
+        if (isAjaxRequest()) {
+            sendJsonResponse([
+                'status' => 'error',
+                'action' => 'update_tenant',
+                'message' => $e->getMessage()
+            ], 422);
+        }
         $error = $e->getMessage();
     }
 }
@@ -243,8 +275,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_settings'])) {
                 $settings[$phoneField] = formatPhoneIfPossible($settings[$phoneField] ?? '');
             }
         }
+        if (isAjaxRequest()) {
+            sendJsonResponse([
+                'status' => 'success',
+                'action' => 'update_settings',
+                'message' => 'Configurações atualizadas.',
+                'slug' => $slugInput,
+                'settings' => $settings
+            ]);
+        }
         $success = 'Configurações atualizadas.';
     } catch (Exception $e) {
+        if (isAjaxRequest()) {
+            sendJsonResponse([
+                'status' => 'error',
+                'action' => 'update_settings',
+                'message' => $e->getMessage()
+            ], 422);
+        }
         $error = $e->getMessage();
     }
 }
@@ -270,8 +318,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_domain'])) {
             'is_primary' => $is_primary
         ]);
         $domains = fetchAll("SELECT * FROM tenant_domains WHERE tenant_id = ? ORDER BY is_primary DESC, id ASC", [$tenant_id]);
+        if (isAjaxRequest()) {
+            sendJsonResponse([
+                'status' => 'success',
+                'action' => 'add_domain',
+                'message' => 'Domínio adicionado.',
+                'domains' => $domains
+            ]);
+        }
         $success = 'Domínio adicionado.';
     } catch (Exception $e) {
+        if (isAjaxRequest()) {
+            sendJsonResponse([
+                'status' => 'error',
+                'action' => 'add_domain',
+                'message' => $e->getMessage()
+            ], 422);
+        }
         $error = $e->getMessage();
     }
 }
@@ -282,12 +345,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_domain'])) {
     $domain = fetch("SELECT * FROM tenant_domains WHERE id = ? AND tenant_id = ?", [$domain_id, $tenant_id]);
     if ($domain) {
         if ($domain['is_primary']) {
+            if (isAjaxRequest()) {
+                sendJsonResponse([
+                    'status' => 'error',
+                    'action' => 'delete_domain',
+                    'message' => 'Não é possível excluir o domínio principal.'
+                ], 422);
+            }
             $error = 'Não é possível excluir o domínio principal.';
         } else {
             query("DELETE FROM tenant_domains WHERE id = ? AND tenant_id = ?", [$domain_id, $tenant_id]);
             $domains = fetchAll("SELECT * FROM tenant_domains WHERE tenant_id = ? ORDER BY is_primary DESC, id ASC", [$tenant_id]);
+            if (isAjaxRequest()) {
+                sendJsonResponse([
+                    'status' => 'success',
+                    'action' => 'delete_domain',
+                    'message' => 'Domínio removido.',
+                    'domains' => $domains
+                ]);
+            }
             $success = 'Domínio removido.';
         }
+    } else {
+        if (isAjaxRequest()) {
+            sendJsonResponse([
+                'status' => 'error',
+                'action' => 'delete_domain',
+                'message' => 'Domínio não encontrado.'
+            ], 404);
+        }
+        $error = 'Domínio não encontrado.';
     }
 }
 
@@ -301,9 +388,88 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_user_password']
             'senha' => password_hash($new_pass, PASSWORD_DEFAULT)
         ], "id = ?", [$user_id]);
         $generated_password = $new_pass;
+        if (isAjaxRequest()) {
+            sendJsonResponse([
+                'status' => 'success',
+                'action' => 'reset_user_password',
+                'message' => 'Senha redefinida com sucesso.',
+                'password' => $generated_password,
+                'user_id' => $user_id
+            ]);
+        }
         $success = 'Senha redefinida com sucesso.';
     } else {
+        if (isAjaxRequest()) {
+            sendJsonResponse([
+                'status' => 'error',
+                'action' => 'reset_user_password',
+                'message' => 'Usuário não encontrado.'
+            ], 404);
+        }
         $error = 'Usuário não encontrado.';
+    }
+}
+
+// Atualizar dados de contato do usuário
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_user_email'])) {
+    $user_id = (int)($_POST['user_id'] ?? 0);
+    $new_name = trim($_POST['new_name'] ?? '');
+    $new_email = strtolower(trim($_POST['new_email'] ?? ''));
+
+    try {
+        if ($user_id <= 0) {
+            throw new Exception('Usuário inválido.');
+        }
+
+        $user = fetch("SELECT id FROM usuarios WHERE id = ? AND tenant_id = ?", [$user_id, $tenant_id]);
+        if (!$user) {
+            throw new Exception('Usuário não encontrado.');
+        }
+
+        if ($new_name === '') {
+            throw new Exception('Informe o nome do usuário.');
+        }
+
+        if ($new_email === '') {
+            throw new Exception('Informe o e-mail do usuário.');
+        }
+
+        if (!filter_var($new_email, FILTER_VALIDATE_EMAIL)) {
+            throw new Exception('Informe um e-mail válido.');
+        }
+
+        $emailExists = fetch("SELECT id FROM usuarios WHERE email = ? AND tenant_id = ? AND id != ?", [$new_email, $tenant_id, $user_id]);
+        if ($emailExists) {
+            throw new Exception('Este e-mail já está em uso por outro usuário.');
+        }
+
+        update('usuarios', [
+            'nome' => cleanInput($new_name),
+            'email' => cleanInput($new_email),
+            'data_atualizacao' => date('Y-m-d H:i:s')
+        ], "id = ?", [$user_id]);
+
+        $updatedUser = fetch("SELECT id, nome, email, nivel, ativo, data_criacao FROM usuarios WHERE id = ?", [$user_id]);
+        $success = 'Dados do usuário atualizados com sucesso.';
+        $generated_password = '';
+        if (isAjaxRequest()) {
+            sendJsonResponse([
+                'status' => 'success',
+                'action' => 'update_user_email',
+                'message' => $success,
+                'user' => $updatedUser
+            ]);
+        }
+    } catch (Exception $e) {
+        if (isAjaxRequest()) {
+            sendJsonResponse([
+                'status' => 'error',
+                'action' => 'update_user_email',
+                'message' => $e->getMessage(),
+                'user_id' => $user_id
+            ], 422);
+        }
+        $error = $e->getMessage();
     }
 }
 
@@ -339,8 +505,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['set_user_password']))
         ], "id = ?", [$user_id]);
 
         $generated_password = '';
+        if (isAjaxRequest()) {
+            sendJsonResponse([
+                'status' => 'success',
+                'action' => 'set_user_password',
+                'message' => 'Senha atualizada com sucesso.',
+                'user_id' => $user_id
+            ]);
+        }
         $success = 'Senha atualizada com sucesso.';
     } catch (Exception $e) {
+        if (isAjaxRequest()) {
+            sendJsonResponse([
+                'status' => 'error',
+                'action' => 'set_user_password',
+                'message' => $e->getMessage(),
+                'user_id' => $user_id
+            ], 422);
+        }
         $error = $e->getMessage();
     }
 }
@@ -412,24 +594,26 @@ include 'includes/header.php';
     </div>
 </div>
 
-<?php if ($error): ?>
-    <div class="alert alert-danger d-flex align-items-center">
-        <i class="fas fa-circle-exclamation me-2"></i>
-        <div><?php echo $error; ?></div>
-    </div>
-<?php endif; ?>
+<div id="tenantAlertContainer">
+    <?php if ($error): ?>
+        <div class="alert alert-danger d-flex align-items-center">
+            <i class="fas fa-circle-exclamation me-2"></i>
+            <div><?php echo $error; ?></div>
+        </div>
+    <?php endif; ?>
 
-<?php if ($success): ?>
-    <div class="alert alert-success">
-        <i class="fas fa-check-circle me-2"></i><?php echo $success; ?>
-        <?php if ($generated_password): ?>
-            <div class="mt-2">
-                <strong>Nova senha:</strong>
-                <span class="fw-bold text-primary"><?php echo $generated_password; ?></span>
-            </div>
-        <?php endif; ?>
-    </div>
-<?php endif; ?>
+    <?php if ($success): ?>
+        <div class="alert alert-success">
+            <i class="fas fa-check-circle me-2"></i><?php echo $success; ?>
+            <?php if ($generated_password): ?>
+                <div class="mt-2">
+                    <strong>Nova senha:</strong>
+                    <span class="fw-bold text-primary"><?php echo $generated_password; ?></span>
+                </div>
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
+</div>
 
 <div class="row g-3 mb-4">
     <div class="col-md-3">
@@ -549,7 +733,7 @@ include 'includes/header.php';
                                 $clientType = in_array($clientType, ['pf', 'pj']) ? $clientType : '';
                                 $statusValue = $_POST['status'] ?? ($tenant['status'] ?? 'active');
                             ?>
-                            <form method="POST" id="tenantClientForm">
+                            <form method="POST" id="tenantClientForm" data-ajax="true">
                                 <div class="tenant-client-block mb-3">
                                     <h6 class="mb-3">Tipo de cliente</h6>
                                     <div class="d-flex flex-wrap gap-4">
@@ -711,7 +895,7 @@ include 'includes/header.php';
                             <h5 class="mb-0"><i class="fas fa-brush me-2 text-primary"></i>Configurações do Site</h5>
                         </div>
                         <div class="card-body">
-                            <form method="POST">
+                            <form method="POST" data-ajax="true">
                                 <div class="row g-3">
                                     <div class="col-sm-6 col-lg-4 col-xl-3">
                                         <label class="form-label">Nome do site</label>
@@ -783,12 +967,11 @@ include 'includes/header.php';
                             </div>
                         </div>
                         <div class="card-body">
-                            <?php if (empty($domains)): ?>
-                                <p class="text-muted mb-0">Nenhum domínio cadastrado.</p>
-                            <?php else: ?>
-                                <ul class="list-group">
+                            <div id="tenantDomainsWrapper">
+                                <p class="text-muted mb-0 <?php echo empty($domains) ? '' : 'd-none'; ?>" id="tenantDomainsEmpty">Nenhum domínio cadastrado.</p>
+                                <ul class="list-group <?php echo empty($domains) ? 'd-none' : ''; ?>" id="tenantDomainsList">
                                     <?php foreach ($domains as $domain): ?>
-                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center" data-domain-id="<?php echo $domain['id']; ?>">
                                             <div>
                                                 <strong><?php echo htmlspecialchars($domain['domain']); ?></strong>
                                                 <?php if ($domain['is_primary']): ?>
@@ -796,7 +979,7 @@ include 'includes/header.php';
                                                 <?php endif; ?>
                                             </div>
                                             <?php if (!$domain['is_primary']): ?>
-                                                <form method="POST" class="mb-0">
+                                                <form method="POST" class="mb-0" data-ajax="true">
                                                     <input type="hidden" name="domain_id" value="<?php echo $domain['id']; ?>">
                                                     <button class="btn btn-sm btn-outline-danger" name="delete_domain" value="1">
                                                         <i class="fas fa-trash"></i>
@@ -806,7 +989,7 @@ include 'includes/header.php';
                                         </li>
                                     <?php endforeach; ?>
                                 </ul>
-                            <?php endif; ?>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -837,9 +1020,9 @@ include 'includes/header.php';
                                         </thead>
                                         <tbody>
                                         <?php foreach ($users as $user): ?>
-                                            <tr>
-                                                <td><?php echo htmlspecialchars($user['nome']); ?></td>
-                                                <td><?php echo htmlspecialchars($user['email']); ?></td>
+                                            <tr data-user-row="<?php echo $user['id']; ?>">
+                                                <td data-user-name-cell><?php echo htmlspecialchars($user['nome']); ?></td>
+                                                <td data-user-email-cell><?php echo htmlspecialchars($user['email']); ?></td>
                                                 <td><span class="badge text-bg-secondary"><?php echo htmlspecialchars($user['nivel']); ?></span></td>
                                                 <td>
                                                     <?php if ($user['ativo']): ?>
@@ -853,6 +1036,18 @@ include 'includes/header.php';
                                                     <div class="d-flex justify-content-end gap-2">
                                                         <button
                                                             type="button"
+                                                            class="btn btn-sm btn-outline-dark"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#editUserModal"
+                                                            data-user-id="<?php echo $user['id']; ?>"
+                                                            data-user-name="<?php echo htmlspecialchars($user['nome']); ?>"
+                                                            data-user-email="<?php echo htmlspecialchars($user['email']); ?>"
+                                                            data-edit-user-button
+                                                        >
+                                                            <i class="fas fa-pen me-1"></i>Editar usuário
+                                                        </button>
+                                                        <button
+                                                            type="button"
                                                             class="btn btn-sm btn-outline-secondary"
                                                             data-bs-toggle="modal"
                                                             data-bs-target="#setPasswordModal"
@@ -861,7 +1056,7 @@ include 'includes/header.php';
                                                         >
                                                             <i class="fas fa-lock me-1"></i>Definir senha
                                                         </button>
-                                                        <form method="POST" class="mb-0">
+                                                        <form method="POST" class="mb-0" data-ajax="true">
                                                             <input type="hidden" name="user_id" value="<?php echo $user['id']; ?>">
                                                             <button class="btn btn-sm btn-outline-primary" name="reset_user_password" value="1">
                                                                 <i class="fas fa-key me-1"></i>Resetar senha
@@ -885,6 +1080,267 @@ include 'includes/header.php';
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        var alertContainer = document.getElementById('tenantAlertContainer');
+        function showTenantAlert(type, message, options) {
+            options = options || {};
+            if (!alertContainer) {
+                return;
+            }
+            alertContainer.innerHTML = '';
+            var alert = document.createElement('div');
+            alert.className = 'alert ' + (type === 'success' ? 'alert-success' : 'alert-danger');
+            var icon = document.createElement('i');
+            icon.className = 'fas ' + (type === 'success' ? 'fa-check-circle' : 'fa-circle-exclamation') + ' me-2';
+            alert.appendChild(icon);
+            var text = document.createElement('span');
+            text.textContent = message || '';
+            alert.appendChild(text);
+
+            if (options.password) {
+                var passwordWrap = document.createElement('div');
+                passwordWrap.className = 'mt-2';
+                var strong = document.createElement('strong');
+                strong.textContent = 'Nova senha:';
+                passwordWrap.appendChild(strong);
+                var span = document.createElement('span');
+                span.className = 'fw-bold text-primary ms-1';
+                span.textContent = options.password;
+                passwordWrap.appendChild(span);
+                alert.appendChild(passwordWrap);
+            }
+
+            alertContainer.appendChild(alert);
+            setTimeout(function () {
+                alertContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+
+        function hideModalForForm(form) {
+            if (!form) {
+                return;
+            }
+            var modalElement = form.closest('.modal');
+            if (modalElement && typeof bootstrap !== 'undefined') {
+                var modalInstance = bootstrap.Modal.getInstance(modalElement);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+            }
+        }
+
+        function updateUserRow(user) {
+            if (!user) {
+                return;
+            }
+            var row = document.querySelector('[data-user-row="' + user.id + '"]');
+            if (!row) {
+                return;
+            }
+            var nameCell = row.querySelector('[data-user-name-cell]');
+            if (nameCell) {
+                nameCell.textContent = user.nome || '';
+            }
+            var emailCell = row.querySelector('[data-user-email-cell]');
+            if (emailCell) {
+                emailCell.textContent = user.email || '';
+            }
+            var editButton = row.querySelector('[data-edit-user-button]');
+            if (editButton) {
+                editButton.setAttribute('data-user-name', user.nome || '');
+                editButton.setAttribute('data-user-email', user.email || '');
+            }
+        }
+
+        function attachAjaxToForm(form) {
+            if (!form || form.dataset.ajaxBound === '1') {
+                return;
+            }
+            form.addEventListener('submit', handleAjaxFormSubmit);
+            form.dataset.ajaxBound = '1';
+        }
+
+        function refreshAjaxForms(root) {
+            (root || document).querySelectorAll('form[data-ajax="true"]').forEach(attachAjaxToForm);
+        }
+
+        function renderDomainsList(domains) {
+            var list = document.getElementById('tenantDomainsList');
+            var empty = document.getElementById('tenantDomainsEmpty');
+            if (!list || !empty) {
+                return;
+            }
+
+            if (!Array.isArray(domains) || domains.length === 0) {
+                list.innerHTML = '';
+                list.classList.add('d-none');
+                empty.classList.remove('d-none');
+                return;
+            }
+
+            empty.classList.add('d-none');
+            list.classList.remove('d-none');
+            list.innerHTML = '';
+
+            domains.forEach(function (domain) {
+                var li = document.createElement('li');
+                li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                li.dataset.domainId = domain.id;
+
+                var info = document.createElement('div');
+                var strong = document.createElement('strong');
+                strong.textContent = domain.domain;
+                info.appendChild(strong);
+
+                if (Number(domain.is_primary)) {
+                    var badge = document.createElement('span');
+                    badge.className = 'badge text-bg-success ms-2';
+                    badge.textContent = 'Principal';
+                    info.appendChild(badge);
+                }
+
+                li.appendChild(info);
+
+                if (!Number(domain.is_primary)) {
+                    var form = document.createElement('form');
+                    form.method = 'POST';
+                    form.className = 'mb-0';
+                    form.dataset.ajax = 'true';
+
+                    var input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'domain_id';
+                    input.value = domain.id;
+                    form.appendChild(input);
+
+                    var button = document.createElement('button');
+                    button.className = 'btn btn-sm btn-outline-danger';
+                    button.name = 'delete_domain';
+                    button.value = '1';
+                    button.innerHTML = '<i class="fas fa-trash"></i>';
+                    form.appendChild(button);
+
+                    attachAjaxToForm(form);
+                    li.appendChild(form);
+                }
+
+                list.appendChild(li);
+            });
+        }
+
+        function processAjaxAction(data, form) {
+            var action = data.action || '';
+            switch (action) {
+                case 'update_tenant':
+                    if (data.tenant && data.tenant.slug) {
+                        var tenantSlugInput = document.querySelector('input[name="slug"]');
+                        if (tenantSlugInput) {
+                            tenantSlugInput.value = data.tenant.slug;
+                        }
+                    }
+                    showTenantAlert('success', data.message || 'Informações do cliente atualizadas com sucesso.');
+                    break;
+                case 'update_settings':
+                    if (data.slug) {
+                        var slugInput = document.querySelector('input[name="slug"]');
+                        if (slugInput) {
+                            slugInput.value = data.slug;
+                            slugInput.dataset.autofill = '0';
+                        }
+                    }
+                    showTenantAlert('success', data.message || 'Configurações atualizadas.');
+                    break;
+                case 'add_domain':
+                    renderDomainsList(data.domains || []);
+                    showTenantAlert('success', data.message || 'Domínio adicionado.');
+                    if (form) {
+                        form.reset();
+                    }
+                    hideModalForForm(form);
+                    break;
+                case 'delete_domain':
+                    renderDomainsList(data.domains || []);
+                    showTenantAlert('success', data.message || 'Domínio removido.');
+                    break;
+                case 'reset_user_password':
+                    showTenantAlert('success', data.message || 'Senha redefinida.', {
+                        password: data.password
+                    });
+                    break;
+                case 'set_user_password':
+                    showTenantAlert('success', data.message || 'Senha atualizada com sucesso.');
+                    hideModalForForm(form);
+                    if (form) {
+                        form.reset();
+                    }
+                    break;
+                case 'update_user_email':
+                    if (data.user) {
+                        updateUserRow(data.user);
+                    }
+                    showTenantAlert('success', data.message || 'Usuário atualizado com sucesso.');
+                    hideModalForForm(form);
+                    break;
+                default:
+                    if (data.status === 'success') {
+                        showTenantAlert('success', data.message || 'Operação realizada com sucesso.');
+                    } else {
+                        showTenantAlert('error', data.message || 'Não foi possível concluir a operação.');
+                    }
+            }
+        }
+
+        function handleAjaxFormSubmit(event) {
+            event.preventDefault();
+            var form = event.target;
+            var submitter = event.submitter;
+            var formData = new FormData(form);
+
+            var submitReference = submitter;
+            if (submitReference && submitReference.name) {
+                formData.append(submitReference.name, submitReference.value === undefined ? '1' : submitReference.value);
+            } else {
+                var fallbackSubmitter = form.querySelector('button[type="submit"][name], input[type="submit"][name]');
+                if (fallbackSubmitter && fallbackSubmitter.name) {
+                    formData.append(fallbackSubmitter.name, fallbackSubmitter.value === undefined ? '1' : fallbackSubmitter.value);
+                    submitReference = fallbackSubmitter;
+                }
+            }
+
+            if (submitReference) {
+                submitReference.disabled = true;
+            }
+
+            fetch(form.getAttribute('action') || window.location.href, {
+                method: (form.getAttribute('method') || 'POST').toUpperCase(),
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            }).then(function (response) {
+                return response.json().then(function (data) {
+                    return { ok: response.ok, data: data };
+                }).catch(function () {
+                    return { ok: response.ok, data: null };
+                });
+            }).then(function (result) {
+                var data = result.data || {};
+                if (!result.ok || data.status !== 'success') {
+                    showTenantAlert('error', data.message || 'Não foi possível concluir a operação.');
+                    return;
+                }
+                processAjaxAction(data, form);
+            }).catch(function () {
+                showTenantAlert('error', 'Erro ao comunicar com o servidor. Tente novamente.');
+            }).finally(function () {
+                if (submitReference) {
+                    submitReference.disabled = false;
+                }
+                refreshAjaxForms(document);
+            });
+        }
+
+        refreshAjaxForms(document);
+
         var typeRadios = document.querySelectorAll('input[name="client_type"]');
         var typeBlocks = document.querySelectorAll('[data-client-type-block]');
         var personFullNameInput = document.querySelector('input[name="person_full_name"]');
@@ -1243,6 +1699,34 @@ include 'includes/header.php';
                 });
             });
         }
+
+        var editUserModal = document.getElementById('editUserModal');
+        if (editUserModal) {
+            editUserModal.addEventListener('show.bs.modal', function (event) {
+                var trigger = event.relatedTarget;
+                if (!trigger) {
+                    return;
+                }
+
+                var userId = trigger.getAttribute('data-user-id') || '';
+                var userName = trigger.getAttribute('data-user-name') || '';
+                var userEmail = trigger.getAttribute('data-user-email') || '';
+
+                var userIdInput = editUserModal.querySelector('input[name="user_id"]');
+                var nameInput = editUserModal.querySelector('input[name="new_name"]');
+                var emailInput = editUserModal.querySelector('input[name="new_email"]');
+
+                if (userIdInput) {
+                    userIdInput.value = userId;
+                }
+                if (nameInput) {
+                    nameInput.value = userName;
+                }
+                if (emailInput) {
+                    emailInput.value = userEmail;
+                }
+            });
+        }
     });
 </script>
 
@@ -1250,7 +1734,7 @@ include 'includes/header.php';
 <div class="modal fade" id="addDomainModal" tabindex="-1" aria-labelledby="addDomainModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="POST">
+            <form method="POST" data-ajax="true">
                 <div class="modal-header">
                     <h5 class="modal-title" id="addDomainModalLabel">Adicionar domínio</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -1278,11 +1762,42 @@ include 'includes/header.php';
     </div>
 </div>
 
+<!-- Modal editar usuário -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" data-ajax="true">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editUserModalLabel">Editar usuário</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="user_id" value="">
+                    <div class="mb-3">
+                        <label class="form-label" for="editUserName">Nome</label>
+                        <input type="text" class="form-control" id="editUserName" name="new_name" required maxlength="100" autocomplete="name">
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label" for="editUserEmail">E-mail</label>
+                        <input type="email" class="form-control" id="editUserEmail" name="new_email" required maxlength="120" autocomplete="email">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" name="update_user_email" value="1" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Salvar alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Modal definir senha manualmente -->
 <div class="modal fade" id="setPasswordModal" tabindex="-1" aria-labelledby="setPasswordModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="POST">
+            <form method="POST" data-ajax="true">
                 <div class="modal-header">
                     <h5 class="modal-title" id="setPasswordModalLabel">Definir senha manualmente</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
