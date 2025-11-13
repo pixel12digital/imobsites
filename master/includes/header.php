@@ -70,6 +70,11 @@ $logoFile = $isDark ? 'logo-imobsites-white.svg' : 'logo-imobsites-full.svg';
                             <i class="fas fa-building me-2"></i>Clientes
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) === 'planos.php' ? 'active' : ''; ?>" href="planos.php">
+                            <i class="fas fa-tags me-2"></i>Planos
+                        </a>
+                    </li>
                 </ul>
             </div>
         </nav>
