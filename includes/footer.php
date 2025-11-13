@@ -9,12 +9,30 @@
                     <h5><?php echo SITE_NAME ?: 'Nome da Imobiliária'; ?></h5>
                     <?php
                         $footerDescription = tenantSetting('footer_description', 'Adicione uma breve descrição da sua imobiliária.');
+                        $facebookUrl = tenantSetting('facebook_url', '');
+                        $instagramUrl = tenantSetting('instagram_url', '');
+                        $linkedinUrl = tenantSetting('linkedin_url', '');
                     ?>
                     <p><?php echo htmlspecialchars($footerDescription, ENT_QUOTES, 'UTF-8'); ?></p>
                     <div class="social-links mt-3">
-                        <a href="#" aria-label="Facebook da <?php echo SITE_NAME ?: 'imobiliária'; ?>"><i class="fab fa-facebook-f fa-lg"></i></a>
-                        <a href="#" aria-label="Instagram da <?php echo SITE_NAME ?: 'imobiliária'; ?>"><i class="fab fa-instagram fa-lg"></i></a>
-                        <a href="#" aria-label="WhatsApp da <?php echo SITE_NAME ?: 'imobiliária'; ?>"><i class="fab fa-whatsapp fa-lg"></i></a>
+                        <?php if ($facebookUrl): ?>
+                            <a href="<?php echo htmlspecialchars($facebookUrl, ENT_QUOTES, 'UTF-8'); ?>" aria-label="Facebook da <?php echo SITE_NAME ?: 'imobiliária'; ?>" target="_blank" rel="noopener noreferrer">
+                                <i class="fab fa-facebook-f fa-lg"></i>
+                            </a>
+                        <?php endif; ?>
+                        <?php if ($instagramUrl): ?>
+                            <a href="<?php echo htmlspecialchars($instagramUrl, ENT_QUOTES, 'UTF-8'); ?>" aria-label="Instagram da <?php echo SITE_NAME ?: 'imobiliária'; ?>" target="_blank" rel="noopener noreferrer">
+                                <i class="fab fa-instagram fa-lg"></i>
+                            </a>
+                        <?php endif; ?>
+                        <?php if ($linkedinUrl): ?>
+                            <a href="<?php echo htmlspecialchars($linkedinUrl, ENT_QUOTES, 'UTF-8'); ?>" aria-label="LinkedIn da <?php echo SITE_NAME ?: 'imobiliária'; ?>" target="_blank" rel="noopener noreferrer">
+                                <i class="fab fa-linkedin fa-lg"></i>
+                            </a>
+                        <?php endif; ?>
+                        <?php if (!$facebookUrl && !$instagramUrl && !$linkedinUrl): ?>
+                            <span class="text-muted small d-block mt-2">Adicione as redes sociais no painel administrativo.</span>
+                        <?php endif; ?>
                     </div>
                 </div>
 
@@ -33,10 +51,20 @@
                 <div class="col-lg-2 mb-4">
                     <h6>Imóveis</h6>
                     <ul>
-                        <li><a href="<?php echo getPagePath('imoveis', ['tipo' => 'casa']); ?>">Casas</a></li>
-                        <li><a href="<?php echo getPagePath('imoveis', ['tipo' => 'apartamento']); ?>">Apartamentos</a></li>
-                        <li><a href="<?php echo getPagePath('imoveis', ['tipo' => 'chacara']); ?>">Chácaras</a></li>
-                        <li><a href="<?php echo getPagePath('imoveis', ['tipo' => 'terreno']); ?>">Terrenos</a></li>
+                        <?php
+                        $footerPropertyTypes = fetchAll("SELECT id, nome FROM tipos_imovel WHERE tenant_id = ? AND ativo = 1 ORDER BY nome LIMIT 4", [TENANT_ID]);
+                        ?>
+                        <?php if ($footerPropertyTypes): ?>
+                            <?php foreach ($footerPropertyTypes as $propertyType): ?>
+                                <li>
+                                    <a href="<?php echo getPagePath('imoveis', ['tipo_imovel' => $propertyType['id']]); ?>">
+                                        <?php echo htmlspecialchars($propertyType['nome'], ENT_QUOTES, 'UTF-8'); ?>
+                                    </a>
+                                </li>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <li class="text-muted">Cadastre tipos de imóveis para exibir nesta área.</li>
+                        <?php endif; ?>
                     </ul>
                 </div>
 
@@ -46,7 +74,7 @@
                     <div class="contact-info">
                         <?php if (!empty(PHONE_VENDA)): ?>
                             <p class="mb-2">
-                                <i class="fas fa-home text-success" aria-hidden="true"></i>
+                                <i class="fas fa-home text-white" aria-hidden="true"></i>
                                 <strong>Vendas:</strong> 
                                 <a href="tel:<?php echo preg_replace('/\D+/', '', PHONE_VENDA); ?>" 
                                    aria-label="Ligar para vendas: <?php echo htmlspecialchars(PHONE_VENDA, ENT_QUOTES, 'UTF-8'); ?>"
@@ -56,14 +84,14 @@
                             </p>
                         <?php else: ?>
                             <p class="mb-2 text-muted">
-                                <i class="fas fa-home text-success" aria-hidden="true"></i>
+                                <i class="fas fa-home text-white" aria-hidden="true"></i>
                                 <strong>Vendas:</strong> Defina o telefone de vendas no painel.
                             </p>
                         <?php endif; ?>
 
                         <?php if (!empty(PHONE_LOCACAO)): ?>
                             <p class="mb-2">
-                                <i class="fas fa-key text-info" aria-hidden="true"></i>
+                                <i class="fas fa-key text-white" aria-hidden="true"></i>
                                 <strong>Locação:</strong> 
                                 <a href="tel:<?php echo preg_replace('/\D+/', '', PHONE_LOCACAO); ?>" 
                                    aria-label="Ligar para locação: <?php echo htmlspecialchars(PHONE_LOCACAO, ENT_QUOTES, 'UTF-8'); ?>"
@@ -73,7 +101,7 @@
                             </p>
                         <?php else: ?>
                             <p class="mb-2 text-muted">
-                                <i class="fas fa-key text-info" aria-hidden="true"></i>
+                                <i class="fas fa-key text-white" aria-hidden="true"></i>
                                 <strong>Locação:</strong> Defina o telefone de locação no painel.
                             </p>
                         <?php endif; ?>

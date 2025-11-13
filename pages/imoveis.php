@@ -28,13 +28,13 @@ $busca = isset($_GET['busca']) ? cleanInput($_GET['busca']) : '';
 
 // Construir query SQL
 $sql = "SELECT i.*, t.nome as tipo_nome, l.cidade, l.bairro, l.estado,
-               CONCAT('imoveis/', i.id, '/', (SELECT arquivo FROM fotos_imovel WHERE imovel_id = i.id ORDER BY ordem ASC LIMIT 1)) as foto_principal
+               CONCAT('imoveis/', i.id, '/', (SELECT arquivo FROM fotos_imovel WHERE imovel_id = i.id AND tenant_id = i.tenant_id ORDER BY ordem ASC LIMIT 1)) as foto_principal
         FROM imoveis i 
         INNER JOIN tipos_imovel t ON i.tipo_id = t.id 
         INNER JOIN localizacoes l ON i.localizacao_id = l.id 
-        WHERE 1=1";
+        WHERE i.tenant_id = ?";
 
-$params = [];
+$params = [TENANT_ID];
 
 // Adicionar busca geral
 if (!empty($busca)) {
@@ -150,9 +150,17 @@ $stmt->execute($params);
 $imoveis = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Buscar dados para filtros
-$tipos = $pdo->query("SELECT * FROM tipos_imovel WHERE ativo = 1")->fetchAll();
-$cidades = $pdo->query("SELECT DISTINCT cidade FROM localizacoes ORDER BY cidade")->fetchAll();
-$caracteristicas_list = $pdo->query("SELECT * FROM caracteristicas WHERE ativo = 1 ORDER BY categoria, nome")->fetchAll();
+$tipos_stmt = $pdo->prepare("SELECT * FROM tipos_imovel WHERE tenant_id = ? AND ativo = 1");
+$tipos_stmt->execute([TENANT_ID]);
+$tipos = $tipos_stmt->fetchAll();
+
+$cidades_stmt = $pdo->prepare("SELECT DISTINCT cidade FROM localizacoes WHERE tenant_id = ? ORDER BY cidade");
+$cidades_stmt->execute([TENANT_ID]);
+$cidades = $cidades_stmt->fetchAll();
+
+$caracteristicas_stmt = $pdo->prepare("SELECT * FROM caracteristicas WHERE ativo = 1 ORDER BY categoria, nome");
+$caracteristicas_stmt->execute();
+$caracteristicas_list = $caracteristicas_stmt->fetchAll();
 ?>
 
 <div class="container-fluid py-5">
@@ -595,22 +603,57 @@ function carregarBairros() {
     const cidadeSelect = document.getElementById('cidadeSelect');
     const bairroSelect = document.getElementById('bairroSelect');
     
+    if (!cidadeSelect || !bairroSelect) {
+        return;
+    }
+
+    const popularBairros = (bairros) => {
+        bairroSelect.innerHTML = '<option value="">Todos os bairros</option>';
+        if (!Array.isArray(bairros) || bairros.length === 0) {
+            return;
+        }
+
+        bairros.forEach(bairro => {
+            const option = document.createElement('option');
+            option.value = bairro;
+            option.textContent = bairro;
+            if (bairro === '<?php echo addslashes($bairro); ?>') {
+                option.selected = true;
+            }
+            bairroSelect.appendChild(option);
+        });
+    };
+
+    const buscarBairros = (cidade) => {
+        if (!cidade) {
+            popularBairros([]);
+            return;
+        }
+
+        bairroSelect.innerHTML = '<option value="">Carregando...</option>';
+
+        fetch('ajax_buscar_bairros.php?cidade=' + encodeURIComponent(cidade))
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    popularBairros(data.bairros || []);
+                } else {
+                    popularBairros([]);
+                }
+            })
+            .catch(() => {
+                popularBairros([]);
+            });
+    };
+    
     cidadeSelect.addEventListener('change', function() {
         const cidade = this.value;
-        bairroSelect.innerHTML = '<option value="">Todos os bairros</option>';
-        
-        if (cidade) {
-            // Aqui você faria uma requisição AJAX para buscar os bairros da cidade
-            // Por enquanto, vamos simular com dados estáticos
-            const bairros = ['Centro', 'Jardim', 'Vila Nova', 'Bairro Industrial'];
-            bairros.forEach(bairro => {
-                const option = document.createElement('option');
-                option.value = bairro;
-                option.textContent = bairro;
-                bairroSelect.appendChild(option);
-            });
-        }
+        buscarBairros(cidade);
     });
+
+    if (cidadeSelect.value) {
+        buscarBairros(cidadeSelect.value);
+    }
 }
 
 // Sistema de Favoritos

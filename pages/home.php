@@ -35,13 +35,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && !empty($_GET)) {
 
     // Construir query SQL
     $sql = "SELECT i.*, t.nome as tipo_nome, l.cidade, l.bairro, l.estado,
-                   CONCAT('imoveis/', i.id, '/', (SELECT arquivo FROM fotos_imovel WHERE imovel_id = i.id ORDER BY ordem ASC LIMIT 1)) as foto_principal
+                   CONCAT('imoveis/', i.id, '/', (SELECT arquivo FROM fotos_imovel WHERE imovel_id = i.id AND tenant_id = i.tenant_id ORDER BY ordem ASC LIMIT 1)) as foto_principal
             FROM imoveis i 
             INNER JOIN tipos_imovel t ON i.tipo_id = t.id 
             INNER JOIN localizacoes l ON i.localizacao_id = l.id 
-            WHERE 1=1";
+            WHERE i.tenant_id = ?";
 
-    $params = [];
+    $params = [TENANT_ID];
 
     // Adicionar busca geral
     if (!empty($busca)) {
@@ -169,16 +169,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && !empty($_GET)) {
 } else {
     // Sem filtros aplicados, carregar imóveis padrão (mais recentes)
     $sql = "SELECT i.*, t.nome as tipo_nome, l.cidade, l.bairro, l.estado,
-                   CONCAT('imoveis/', i.id, '/', (SELECT arquivo FROM fotos_imovel WHERE imovel_id = i.id ORDER BY ordem ASC LIMIT 1)) as foto_principal
+                   CONCAT('imoveis/', i.id, '/', (SELECT arquivo FROM fotos_imovel WHERE imovel_id = i.id AND tenant_id = i.tenant_id ORDER BY ordem ASC LIMIT 1)) as foto_principal
             FROM imoveis i 
             INNER JOIN tipos_imovel t ON i.tipo_id = t.id 
             INNER JOIN localizacoes l ON i.localizacao_id = l.id 
-            WHERE i.status = 'disponivel'
+            WHERE i.tenant_id = ? AND i.status = 'disponivel'
             ORDER BY i.data_criacao DESC
             LIMIT 6";
     
     $stmt = $pdo->prepare($sql);
-    $stmt->execute();
+    $stmt->execute([TENANT_ID]);
     $imoveis_filtrados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 ?>
@@ -239,7 +239,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && !empty($_GET)) {
                                     <select class="form-select" id="tipo_imovel" name="tipo_imovel">
                                         <option value="">Todos</option>
                                         <?php
-                                        $tipos = fetchAll("SELECT id, nome FROM tipos_imovel ORDER BY nome");
+                                        $tipos = fetchAll("SELECT id, nome FROM tipos_imovel WHERE tenant_id = ? ORDER BY nome", [TENANT_ID]);
                                         if ($tipos) {
                                             foreach ($tipos as $tipo) {
                                                 echo '<option value="' . $tipo['id'] . '">' . htmlspecialchars($tipo['nome']) . '</option>';
@@ -257,7 +257,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && !empty($_GET)) {
                                     <select class="form-select" id="cidade" name="cidade">
                                         <option value="">Todas</option>
                                         <?php
-                                        $cidades = fetchAll("SELECT DISTINCT cidade FROM localizacoes ORDER BY cidade");
+                                        $cidades = fetchAll("SELECT DISTINCT cidade FROM localizacoes WHERE tenant_id = ? ORDER BY cidade", [TENANT_ID]);
                                         if ($cidades) {
                                             foreach ($cidades as $cidade) {
                                                 echo '<option value="' . htmlspecialchars($cidade['cidade']) . '">' . htmlspecialchars($cidade['cidade']) . '</option>';
@@ -565,14 +565,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && !empty($_GET)) {
             // Buscar imóveis em destaque
             $featured_properties = fetchAll("
                 SELECT i.*, t.nome as tipo_nome, l.cidade, l.bairro, 
-                       CONCAT('imoveis/', i.id, '/', (SELECT arquivo FROM fotos_imovel WHERE imovel_id = i.id ORDER BY ordem ASC LIMIT 1)) as foto_principal
+                       CONCAT('imoveis/', i.id, '/', (SELECT arquivo FROM fotos_imovel WHERE imovel_id = i.id AND tenant_id = i.tenant_id ORDER BY ordem ASC LIMIT 1)) as foto_principal
                 FROM imoveis i
                 LEFT JOIN tipos_imovel t ON i.tipo_id = t.id
                 LEFT JOIN localizacoes l ON i.localizacao_id = l.id
-                WHERE i.destaque = 1 AND i.status = 'disponivel'
+                WHERE i.tenant_id = ? AND i.destaque = 1 AND i.status = 'disponivel'
                 ORDER BY i.data_criacao DESC
                 LIMIT 6
-            ");
+            ", [TENANT_ID]);
 
             if ($featured_properties) {
                 foreach ($featured_properties as $property) {
@@ -661,86 +661,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && !empty($_GET)) {
                     <?php
                 }
             } else {
-                // Imóveis de exemplo quando não há dados no banco
-                $example_properties = [
-                    [
-                        'titulo' => 'Imóvel Residencial Exemplo',
-                        'preco' => 0.00,
-                        'bairro' => 'Bairro Exemplo',
-                        'cidade' => 'Cidade Exemplo',
-                        'quartos' => 3,
-                        'banheiros' => 4,
-                        'vagas' => 4,
-                        'area_total' => 200
-                    ],
-                    [
-                        'titulo' => 'Apartamento Exemplo',
-                        'preco' => 0.00,
-                        'bairro' => 'Bairro Exemplo',
-                        'cidade' => 'Cidade Exemplo',
-                        'quartos' => 2,
-                        'banheiros' => 2,
-                        'vagas' => 2,
-                        'area_total' => 85
-                    ],
-                    [
-                        'titulo' => 'Imóvel Comercial Exemplo',
-                        'preco' => 0.00,
-                        'bairro' => 'Bairro Exemplo',
-                        'cidade' => 'Cidade Exemplo',
-                        'quartos' => 3,
-                        'banheiros' => 3,
-                        'vagas' => 5,
-                        'area_total' => 235
-                    ]
-                ];
-
-                foreach ($example_properties as $property) {
-                    ?>
-                    <div class="col-lg-4 col-md-6 mb-4">
-                        <div class="property-card card h-100 shadow-sm">
-                            <div class="property-image">
-                                <div class="no-image bg-light d-flex align-items-center justify-content-center" 
-                                     style="height: 200px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 8px 8px 0 0;">
-                                    <div class="text-center">
-                                        <i class="fas fa-home fa-3x text-muted mb-2"></i>
-                                        <p class="text-muted small mb-0">Foto não disponível</p>
-                                    </div>
-                                </div>
-                                <div class="property-price">
-                                    <span class="badge bg-primary fs-6"><?php echo formatPrice($property['preco']); ?></span>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <h5 class="card-title"><?php echo $property['titulo']; ?></h5>
-                                <p class="card-text text-muted">
-                                    <i class="fas fa-map-marker-alt me-2"></i>
-                                    <?php echo $property['bairro'] . ', ' . $property['cidade']; ?>
-                                </p>
-                                <div class="property-features">
-                                    <span class="badge bg-light text-dark me-2">
-                                        <i class="fas fa-bed me-1"></i><?php echo $property['quartos']; ?> Quartos
-                                    </span>
-                                    <span class="badge bg-light text-dark me-2">
-                                        <i class="fas fa-bath me-1"></i><?php echo $property['banheiros']; ?> Banheiros
-                                    </span>
-                                    <span class="badge bg-light text-dark me-2">
-                                        <i class="fas fa-car me-1"></i><?php echo $property['vagas']; ?> Vagas
-                                    </span>
-                                </div>
-                                <div class="property-area mt-2">
-                                    <small class="text-muted">
-                                        Área: <?php echo $property['area_total']; ?>m²
-                                    </small>
-                                </div>
-                            </div>
-                            <div class="card-footer bg-transparent border-0">
-                                <a href="#" class="btn btn-primary w-100">Ver Imóvel</a>
-                            </div>
+                ?>
+                <div class="col-12">
+                    <div class="empty-state card border-0 shadow-sm text-center py-5">
+                        <div class="card-body">
+                            <i class="fas fa-star fa-3x text-muted mb-3"></i>
+                            <h5 class="mb-2">Nenhum imóvel em destaque cadastrado</h5>
+                            <p class="text-muted mb-4">
+                                Adicione imóveis e marque-os como destaque no painel administrativo para que eles apareçam automaticamente nesta área do site.
+                            </p>
+                            <a href="<?php echo getPagePath('imoveis'); ?>" class="btn btn-outline-primary">
+                                Ver catálogo completo
+                            </a>
                         </div>
                     </div>
-                    <?php
-                }
+                </div>
+                <?php
             }
             ?>
         </div>

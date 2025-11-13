@@ -24,11 +24,11 @@ if (!empty($imoveis_ids)) {
             INNER JOIN tipos_imovel t ON i.tipo_id = t.id 
             INNER JOIN localizacoes l ON i.localizacao_id = l.id 
             INNER JOIN usuarios u ON i.usuario_id = u.id 
-            WHERE i.id IN ($placeholders)
+            WHERE i.id IN ($placeholders) AND i.tenant_id = ?
             ORDER BY FIELD(i.id, $placeholders)";
     
     $stmt = $pdo->prepare($sql);
-    $stmt->execute(array_merge($imoveis_ids, $imoveis_ids));
+    $stmt->execute(array_merge($imoveis_ids, [TENANT_ID], $imoveis_ids));
     $imoveis_comparacao = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
@@ -39,11 +39,11 @@ if (!empty($imoveis_comparacao)) {
     $sql = "SELECT ic.imovel_id, c.nome, c.categoria 
             FROM imovel_caracteristicas ic 
             INNER JOIN caracteristicas c ON ic.caracteristica_id = c.id 
-            WHERE ic.imovel_id IN ($placeholders)
+            WHERE ic.imovel_id IN ($placeholders) AND ic.tenant_id = ?
             ORDER BY c.categoria, c.nome";
     
     $stmt = $pdo->prepare($sql);
-    $stmt->execute(array_column($imoveis_comparacao, 'id'));
+    $stmt->execute(array_merge(array_column($imoveis_comparacao, 'id'), [TENANT_ID]));
     $caracteristicas_raw = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Organizar características por imóvel
@@ -107,8 +107,8 @@ if (!empty($imoveis_comparacao)) {
                                     
                                     <?php
                                     // Buscar primeira foto por ordem
-                                    $stmt = $pdo->prepare("SELECT arquivo FROM fotos_imovel WHERE imovel_id = ? ORDER BY ordem ASC LIMIT 1");
-                                    $stmt->execute([$imovel['id']]);
+                                    $stmt = $pdo->prepare("SELECT arquivo FROM fotos_imovel WHERE imovel_id = ? AND tenant_id = ? ORDER BY ordem ASC LIMIT 1");
+                                    $stmt->execute([$imovel['id'], TENANT_ID]);
                                     $foto = $stmt->fetch();
                                     ?>
                                     

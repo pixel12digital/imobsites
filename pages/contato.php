@@ -22,9 +22,10 @@ try {
         SUM(CASE WHEN status = 'disponivel' THEN 1 ELSE 0 END) as disponiveis,
         SUM(CASE WHEN status = 'vendido' THEN 1 ELSE 0 END) as vendidos,
         SUM(CASE WHEN status = 'alugado' THEN 1 ELSE 0 END) as alugados
-    FROM imoveis";
+    FROM imoveis
+    WHERE tenant_id = ?";
     $stats_stmt = $pdo->prepare($stats_sql);
-    $stats_stmt->execute();
+    $stats_stmt->execute([TENANT_ID]);
     $stats = $stats_stmt->fetch();
     
     $total_imoveis = $stats['disponiveis'] ?? 0;

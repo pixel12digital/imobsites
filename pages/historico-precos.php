@@ -16,8 +16,8 @@ if ($imovel_id > 0) {
                            FROM imoveis i 
                            INNER JOIN tipos_imovel t ON i.tipo_id = t.id 
                            INNER JOIN localizacoes l ON i.localizacao_id = l.id 
-                           WHERE i.id = ?");
-    $stmt->execute([$imovel_id]);
+                           WHERE i.id = ? AND i.tenant_id = ?");
+    $stmt->execute([$imovel_id, TENANT_ID]);
     $imovel = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if ($imovel) {
@@ -25,22 +25,22 @@ if ($imovel_id > 0) {
         $stmt = $pdo->prepare("SELECT hp.*, u.nome as usuario_nome 
                                FROM historico_precos hp 
                                LEFT JOIN usuarios u ON hp.usuario_id = u.id 
-                               WHERE hp.imovel_id = ? 
+                               WHERE hp.imovel_id = ? AND hp.tenant_id = ? 
                                ORDER BY hp.data_alteracao DESC");
-        $stmt->execute([$imovel_id]);
+        $stmt->execute([$imovel_id, TENANT_ID]);
         $historico = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 } else {
     // Buscar todos os imóveis com histórico de preços
     $stmt = $pdo->prepare("SELECT i.id, i.titulo, i.preco, t.nome as tipo_nome, l.cidade, l.bairro,
-                           (SELECT COUNT(*) FROM historico_precos WHERE imovel_id = i.id) as total_alteracoes,
-                           (SELECT MAX(data_alteracao) FROM historico_precos WHERE imovel_id = i.id) as ultima_alteracao
+                           (SELECT COUNT(*) FROM historico_precos WHERE imovel_id = i.id AND tenant_id = ?) as total_alteracoes,
+                           (SELECT MAX(data_alteracao) FROM historico_precos WHERE imovel_id = i.id AND tenant_id = ?) as ultima_alteracao
                            FROM imoveis i 
                            INNER JOIN tipos_imovel t ON i.tipo_id = t.id 
                            INNER JOIN localizacoes l ON i.localizacao_id = l.id 
-                           WHERE EXISTS (SELECT 1 FROM historico_precos WHERE imovel_id = i.id)
+                           WHERE i.tenant_id = ? AND EXISTS (SELECT 1 FROM historico_precos WHERE imovel_id = i.id AND tenant_id = ?)
                            ORDER BY ultima_alteracao DESC");
-    $stmt->execute();
+    $stmt->execute([TENANT_ID, TENANT_ID, TENANT_ID, TENANT_ID]);
     $imoveis_com_historico = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 ?>

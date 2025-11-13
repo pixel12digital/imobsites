@@ -5,12 +5,13 @@
 $page_title = 'Filtros Avançados - ' . SITE_NAME;
 
 // Buscar todas as características organizadas por categoria
-$stmt = $pdo->query("SELECT c.*, COUNT(ic.imovel_id) as total_imoveis 
+$stmt = $pdo->prepare("SELECT c.*, COUNT(ic.imovel_id) as total_imoveis 
                       FROM caracteristicas c 
-                      LEFT JOIN imovel_caracteristicas ic ON c.id = ic.caracteristica_id 
+                      LEFT JOIN imovel_caracteristicas ic ON c.id = ic.caracteristica_id AND ic.tenant_id = ?
                       WHERE c.ativo = 1 
                       GROUP BY c.id 
                       ORDER BY c.categoria, c.nome");
+$stmt->execute([TENANT_ID]);
 $caracteristicas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Organizar por categoria
@@ -36,20 +37,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             INNER JOIN tipos_imovel t ON i.tipo_id = t.id 
             INNER JOIN localizacoes l ON i.localizacao_id = l.id 
             INNER JOIN usuarios u ON i.usuario_id = u.id 
-            WHERE i.status = 'disponivel'";
+            WHERE i.tenant_id = ? AND i.status = 'disponivel'";
     
-    $params = [];
+    $params = [TENANT_ID];
     
     if (!empty($caracteristicas_selecionadas)) {
         $placeholders = str_repeat('?,', count($caracteristicas_selecionadas) - 1) . '?';
         $sql .= " AND i.id IN (
                     SELECT DISTINCT imovel_id 
                     FROM imovel_caracteristicas 
-                    WHERE caracteristica_id IN ($placeholders)
+                    WHERE tenant_id = ? AND caracteristica_id IN ($placeholders)
                     GROUP BY imovel_id 
                     HAVING COUNT(DISTINCT caracteristica_id) = ?
                   )";
-        $params = array_merge($params, $caracteristicas_selecionadas, [count($caracteristicas_selecionadas)]);
+        $params = array_merge($params, [TENANT_ID], $caracteristicas_selecionadas, [count($caracteristicas_selecionadas)]);
     }
     
     if (!empty($preco_min)) {
@@ -100,8 +101,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Buscar dados para filtros básicos
-$tipos = $pdo->query("SELECT * FROM tipos_imovel WHERE ativo = 1")->fetchAll();
-$cidades = $pdo->query("SELECT DISTINCT cidade FROM localizacoes ORDER BY cidade")->fetchAll();
+$tipos_stmt = $pdo->prepare("SELECT * FROM tipos_imovel WHERE tenant_id = ? AND ativo = 1");
+$tipos_stmt->execute([TENANT_ID]);
+$tipos = $tipos_stmt->fetchAll();
+
+$cidades_stmt = $pdo->prepare("SELECT DISTINCT cidade FROM localizacoes WHERE tenant_id = ? ORDER BY cidade");
+$cidades_stmt->execute([TENANT_ID]);
+$cidades = $cidades_stmt->fetchAll();
 ?>
 
 <div class="container-fluid py-5">
@@ -285,8 +291,8 @@ $cidades = $pdo->query("SELECT DISTINCT cidade FROM localizacoes ORDER BY cidade
                                     <div class="position-relative">
                                         <?php
                                         // Buscar primeira foto por ordem
-                                        $stmt = $pdo->prepare("SELECT arquivo FROM fotos_imovel WHERE imovel_id = ? ORDER BY ordem ASC LIMIT 1");
-                                        $stmt->execute([$imovel['id']]);
+                                        $stmt = $pdo->prepare("SELECT arquivo FROM fotos_imovel WHERE imovel_id = ? AND tenant_id = ? ORDER BY ordem ASC LIMIT 1");
+                                        $stmt->execute([$imovel['id'], TENANT_ID]);
                                         $foto = $stmt->fetch();
                                         ?>
                                         

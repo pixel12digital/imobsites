@@ -19,8 +19,8 @@ $imovel = fetch("
     LEFT JOIN tipos_imovel t ON i.tipo_id = t.id
     LEFT JOIN localizacoes l ON i.localizacao_id = l.id
     LEFT JOIN usuarios u ON i.usuario_id = u.id
-    WHERE i.id = ?
-", [$imovel_id]);
+    WHERE i.id = ? AND i.tenant_id = ?
+", [$imovel_id, TENANT_ID]);
 
 if (!$imovel) {
     // Redirecionar se imóvel não existir
@@ -31,9 +31,9 @@ if (!$imovel) {
 // Buscar fotos do imóvel
 $fotos = fetchAll("
     SELECT * FROM fotos_imovel 
-    WHERE imovel_id = ? 
+    WHERE imovel_id = ? AND tenant_id = ?
     ORDER BY principal DESC, ordem ASC
-", [$imovel_id]);
+", [$imovel_id, TENANT_ID]);
 
 // Buscar características do imóvel
 $caracteristicas = fetchAll("
@@ -47,15 +47,15 @@ $caracteristicas = fetchAll("
 // Buscar imóveis similares
 $imoveis_similares = fetchAll("
     SELECT i.*, t.nome as tipo_nome, l.cidade, l.bairro, 
-           CONCAT('imoveis/', i.id, '/', (SELECT arquivo FROM fotos_imovel WHERE imovel_id = i.id ORDER BY ordem ASC LIMIT 1)) as foto_principal
+           CONCAT('imoveis/', i.id, '/', (SELECT arquivo FROM fotos_imovel WHERE imovel_id = i.id AND tenant_id = i.tenant_id ORDER BY ordem ASC LIMIT 1)) as foto_principal
     FROM imoveis i
     LEFT JOIN tipos_imovel t ON i.tipo_id = t.id
     LEFT JOIN localizacoes l ON i.localizacao_id = l.id
-    WHERE i.id != ? AND i.status = 'disponivel' 
+    WHERE i.id != ? AND i.tenant_id = ? AND i.status = 'disponivel' 
     AND (i.tipo_id = ? OR l.cidade = ? OR i.preco BETWEEN ? AND ?)
     ORDER BY RAND()
     LIMIT 3
-", [$imovel_id, $imovel['tipo_id'], $imovel['cidade'], 
+", [$imovel_id, TENANT_ID, $imovel['tipo_id'], $imovel['cidade'], 
      $imovel['preco'] * 0.7, $imovel['preco'] * 1.3]);
 
 // Organizar características por categoria

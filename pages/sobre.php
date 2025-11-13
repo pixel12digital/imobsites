@@ -2,9 +2,9 @@
 // Página Sobre - imobsites
 
 // Buscar estatísticas para mostrar na página
-$total_imoveis = fetch("SELECT COUNT(*) as total FROM imoveis")['total'];
-$total_vendidos = fetch("SELECT COUNT(*) as total FROM imoveis WHERE status = 'vendido'")['total'];
-$total_alugados = fetch("SELECT COUNT(*) as total FROM imoveis WHERE status = 'alugado'")['total'];
+$total_imoveis = fetch("SELECT COUNT(*) as total FROM imoveis WHERE tenant_id = ?", [TENANT_ID])['total'];
+$total_vendidos = fetch("SELECT COUNT(*) as total FROM imoveis WHERE tenant_id = ? AND status = 'vendido'", [TENANT_ID])['total'];
+$total_alugados = fetch("SELECT COUNT(*) as total FROM imoveis WHERE tenant_id = ? AND status = 'alugado'", [TENANT_ID])['total'];
 $total_clientes = fetch("SELECT COUNT(*) as total FROM clientes")['total'];
 ?>
 

@@ -3,6 +3,7 @@
 header('Content-Type: application/json');
 
 require_once 'config/database.php';
+require_once 'config/tenant.php';
 require_once 'config/config.php';
 require_once 'config/paths.php';
 
@@ -32,13 +33,13 @@ try {
 
     // Construir query SQL
     $sql = "SELECT i.*, t.nome as tipo_nome, l.cidade, l.bairro, l.estado,
-                   CONCAT('imoveis/', i.id, '/', (SELECT arquivo FROM fotos_imovel WHERE imovel_id = i.id ORDER BY ordem ASC LIMIT 1)) as foto_principal
+                   CONCAT('imoveis/', i.id, '/', (SELECT arquivo FROM fotos_imovel WHERE imovel_id = i.id AND tenant_id = i.tenant_id ORDER BY ordem ASC LIMIT 1)) as foto_principal
             FROM imoveis i 
             INNER JOIN tipos_imovel t ON i.tipo_id = t.id 
             INNER JOIN localizacoes l ON i.localizacao_id = l.id 
-            WHERE 1=1";
+            WHERE i.tenant_id = ?";
 
-    $params = [];
+    $params = [TENANT_ID];
 
     // Adicionar busca geral
     if (!empty($busca)) {

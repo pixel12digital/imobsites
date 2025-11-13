@@ -238,8 +238,6 @@ function initSearchSuggestions() {
 // Buscar propriedades
 function searchProperties(query) {
     // Aqui você implementaria a busca AJAX real
-    console.log('Buscando por:', query);
-    
     // Implementação da busca será adicionada posteriormente se necessário
 }
 
@@ -249,7 +247,6 @@ function updateSearchResults(results) {
     if (!resultsContainer) return;
     
     // Implementar atualização dos resultados
-    console.log('Resultados:', results);
 }
 
 // Sistema de favoritos

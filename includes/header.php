@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php
-        $pageTitle = SITE_NAME ?: 'Nome da Imobiliária';
+        $pageTitle = SITE_NAME ?: 'Portal Imobiliário';
         if (!empty(SITE_TAGLINE)) {
             $pageTitle .= ' - ' . SITE_TAGLINE;
         }
@@ -12,7 +12,17 @@
         $metaDescription = SITE_META_DESCRIPTION ?: 'Adicione a descrição da sua imobiliária.';
         $metaKeywords = SITE_META_KEYWORDS ?: 'imobiliária, imóveis, personalize';
         $metaAuthor = SITE_META_AUTHOR ?: (SITE_NAME ?: 'Imobiliária');
-        $highlightPhone = PHONE_VENDA ?: 'Configure o telefone principal da imobiliária';
+        $highlightPhone = PHONE_VENDA ?: 'Defina o telefone principal da imobiliária no painel.';
+
+        $logoSetting = tenantSetting('logo_path', '');
+        $logoUrl = $logoSetting ? getUploadPath($logoSetting) : false;
+        if (!$logoUrl) {
+            $logoUrl = getAssetPath('logo-imobsites-full.svg');
+        }
+
+        $facebookUrl = tenantSetting('facebook_url', '');
+        $instagramUrl = tenantSetting('instagram_url', '');
+        $linkedinUrl = tenantSetting('linkedin_url', '');
     ?>
     <title><?php echo htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8'); ?></title>
     
@@ -43,10 +53,25 @@
                         <i class="fas fa-phone me-2"></i>
                         <span><?php echo htmlspecialchars($highlightPhone, ENT_QUOTES, 'UTF-8'); ?></span>
                     </div>
-                    <div class="social-links">
-                        <a href="#" class="text-white me-3"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#" class="text-white me-3"><i class="fab fa-instagram"></i></a>
-                        <a href="#" class="text-white me-3"><i class="fab fa-whatsapp"></i></a>
+                    <div class="social-links d-flex align-items-center">
+                        <?php if ($facebookUrl): ?>
+                            <a href="<?php echo htmlspecialchars($facebookUrl, ENT_QUOTES, 'UTF-8'); ?>" class="text-white me-3" target="_blank" rel="noopener noreferrer">
+                                <i class="fab fa-facebook-f"></i>
+                            </a>
+                        <?php endif; ?>
+                        <?php if ($instagramUrl): ?>
+                            <a href="<?php echo htmlspecialchars($instagramUrl, ENT_QUOTES, 'UTF-8'); ?>" class="text-white me-3" target="_blank" rel="noopener noreferrer">
+                                <i class="fab fa-instagram"></i>
+                            </a>
+                        <?php endif; ?>
+                        <?php if ($linkedinUrl): ?>
+                            <a href="<?php echo htmlspecialchars($linkedinUrl, ENT_QUOTES, 'UTF-8'); ?>" class="text-white me-3" target="_blank" rel="noopener noreferrer">
+                                <i class="fab fa-linkedin-in"></i>
+                            </a>
+                        <?php endif; ?>
+                        <?php if (!$facebookUrl && !$instagramUrl && !$linkedinUrl): ?>
+                            <span class="text-white-50 small">Configure suas redes sociais no painel.</span>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -58,7 +83,7 @@
                 <div class="row align-items-center w-100">
                     <div class="col-lg-6 col-md-6 col-6">
                         <a class="navbar-brand" href="<?php echo getPagePath('home'); ?>">
-                            <img src="<?php echo getAssetPath('logo-imob.png'); ?>" alt="<?php echo htmlspecialchars(SITE_NAME ?: 'Logo da Imobiliária', ENT_QUOTES, 'UTF-8'); ?>" class="logo-img">
+                            <img src="<?php echo htmlspecialchars($logoUrl, ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars(SITE_NAME ?: 'Logo da Imobiliária', ENT_QUOTES, 'UTF-8'); ?>" class="logo-img">
                         </a>
                     </div>
                     
