@@ -17,6 +17,8 @@ require_once __DIR__ . '/../../master/includes/AsaasPaymentService.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
+error_log('[orders.create] endpoint chamado');
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode([
@@ -35,10 +37,19 @@ function readRequestPayload(): array
 {
     $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
 
+    $raw = file_get_contents('php://input') ?: '';
+    $decoded = json_decode($raw, true);
+
+    if (is_array($decoded)) {
+        return $decoded;
+    }
+
     if (stripos($contentType, 'application/json') !== false) {
-        $raw = file_get_contents('php://input');
-        $decoded = json_decode($raw ?: '', true);
-        return is_array($decoded) ? $decoded : [];
+        error_log('[orders.create] payload inválido: JSON malformado ou vazio');
+        if (!empty($_POST)) {
+            return $_POST;
+        }
+        return [];
     }
 
     return $_POST;
@@ -70,7 +81,7 @@ function validateOrderInput(array $input): array
     }
 
     if (!empty($errors)) {
-        throw new InvalidArgumentException(implode(' ', $errors));
+        throw new InvalidArgumentException('Dados incompletos para criar o pedido.');
     }
 
     $whatsapp = isset($input['customer_whatsapp'])
@@ -94,12 +105,26 @@ function validateOrderInput(array $input): array
 
 try {
     $payload = readRequestPayload();
+
+    error_log('[orders.create] payload: plan_code=' . ($payload['plan_code'] ?? 'null') . ' email=' . ($payload['customer_email'] ?? 'null'));
+
+    if (!is_array($payload) || $payload === []) {
+        error_log('[orders.create] payload inválido: estrutura não é um array');
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Dados incompletos para criar o pedido.',
+        ]);
+        exit;
+    }
+
     $validated = validateOrderInput($payload);
 
     $plan = getPlanByCode($validated['plan_code']);
 
     if (!$plan || (int)$plan['is_active'] !== 1) {
-        throw new InvalidArgumentException('Plano informado não está disponível.');
+        error_log('[orders.create] plano não encontrado: ' . $validated['plan_code']);
+        throw new InvalidArgumentException('Plano selecionado não foi encontrado. Atualize a página e tente novamente.');
     }
 
     $validated['billing_cycle'] = $plan['billing_cycle'];
@@ -108,6 +133,10 @@ try {
     $validated['months'] = (int)$plan['months'];
 
     $order = createOrderFromCheckout($validated);
+    $orderId = (int)($order['id'] ?? 0);
+    $planCode = $validated['plan_code'];
+
+    error_log('[orders.create] pedido criado ID=' . $orderId . ' para plan_code=' . $planCode);
 
     $customerPayload = [
         'name' => $validated['customer_name'],
@@ -119,44 +148,49 @@ try {
     try {
         $gatewayResponse = createPaymentOnAsaas($order, $plan, $customerPayload);
     } catch (Throwable $asaasError) {
-        error_log('[asaas.payment.error] Falha ao criar cobrança: ' . $asaasError->getMessage());
-        throw new RuntimeException('Não foi possível gerar o link de pagamento. Tente novamente em instantes.');
+        error_log('[orders.create.error] Falha ao criar cobrança no Asaas: ' . $asaasError->getMessage());
+        throw new RuntimeException('Não foi possível gerar o link de pagamento. Tente novamente em alguns instantes.', 0, $asaasError);
     }
 
-    updateOrderPaymentData((int)$order['id'], [
+    updateOrderPaymentData($orderId, [
         'provider_payment_id' => $gatewayResponse['provider_payment_id'] ?? null,
         'payment_url' => $gatewayResponse['payment_url'] ?? null,
         'status' => 'pending',
         'max_installments' => $validated['max_installments'],
     ]);
 
-    $order = fetch('SELECT * FROM orders WHERE id = ?', [$order['id']]);
+    $order = fetch('SELECT * FROM orders WHERE id = ?', [$orderId]);
+    $paymentUrl = $order['payment_url'] ?? ($gatewayResponse['payment_url'] ?? null);
 
     echo json_encode([
         'success' => true,
-        'message' => 'Pedido criado com sucesso.',
         'order_id' => $order['id'] ?? null,
-        'payment_url' => $order['payment_url'] ?? null,
+        'payment_url' => $paymentUrl,
     ]);
+    exit;
 } catch (InvalidArgumentException $e) {
-    http_response_code(422);
+    http_response_code(400);
+    error_log('[orders.create] validação falhou: ' . $e->getMessage());
     echo json_encode([
         'success' => false,
         'message' => $e->getMessage(),
     ]);
+    exit;
 } catch (RuntimeException $e) {
-    http_response_code(502);
-    error_log('[orders.create] Falha na integração Asaas: ' . $e->getMessage());
+    http_response_code(500);
+    error_log('[orders.create.error] ' . $e->getMessage());
     echo json_encode([
         'success' => false,
         'message' => $e->getMessage(),
     ]);
+    exit;
 } catch (Throwable $e) {
     http_response_code(500);
-    error_log('[orders.create] Erro interno: ' . $e->getMessage());
+    error_log('[orders.create.error] Erro interno: ' . $e->getMessage());
     echo json_encode([
         'success' => false,
         'message' => 'Não foi possível criar o pedido.',
     ]);
+    exit;
 }
 

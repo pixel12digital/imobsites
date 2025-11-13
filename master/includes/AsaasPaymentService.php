@@ -141,7 +141,12 @@ if (!function_exists('createPaymentOnAsaas')) {
             $paymentPayload['installmentCount'] = (int)$customerData['max_installments'];
         }
 
-        $paymentResponse = asaasCreatePayment($paymentPayload);
+        try {
+            $paymentResponse = asaasCreatePayment($paymentPayload);
+        } catch (Throwable $paymentError) {
+            error_log('[asaas.payment.error] Falha ao criar cobrança orderId=' . $orderId . ': ' . $paymentError->getMessage());
+            throw $paymentError;
+        }
 
         $providerPaymentId = (string)($paymentResponse['id'] ?? '');
         if ($providerPaymentId === '') {
@@ -153,6 +158,8 @@ if (!function_exists('createPaymentOnAsaas')) {
         if ($paymentUrl === null) {
             error_log('[asaas.payment] Cobrança sem URL de pagamento retornada.');
         }
+
+        error_log('[asaas.payment] cobrança criada paymentId=' . $providerPaymentId . ' orderId=' . $orderId);
 
         return [
             'provider' => 'asaas',
