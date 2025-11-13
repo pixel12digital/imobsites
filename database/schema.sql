@@ -1,6 +1,6 @@
--- Criação do banco de dados
-CREATE DATABASE IF NOT EXISTS jtr_imoveis CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE jtr_imoveis;
+-- Criação do banco de dados de exemplo
+CREATE DATABASE IF NOT EXISTS imobsites_template CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE imobsites_template;
 
 -- Tabela de usuários (administradores)
 CREATE TABLE usuarios (
@@ -150,7 +150,7 @@ CREATE INDEX idx_historico_data ON historico_precos(data_alteracao);
 
 -- Inserir dados iniciais
 INSERT INTO usuarios (nome, email, senha, nivel) VALUES 
-('Administrador', 'admin@jtrimoveis.com.br', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
+('Administrador', 'admin@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
 
 INSERT INTO tipos_imovel (nome, descricao) VALUES 
 ('Casa', 'Casa térrea ou sobrado'),
@@ -161,11 +161,11 @@ INSERT INTO tipos_imovel (nome, descricao) VALUES
 ('Rural', 'Propriedade rural');
 
 INSERT INTO localizacoes (cidade, bairro, estado) VALUES 
-('São Paulo', 'Vila Madalena', 'SP'),
-('São Paulo', 'Pinheiros', 'SP'),
-('São Paulo', 'Vila Olímpia', 'SP'),
-('Campinas', 'Centro', 'SP'),
-('Campinas', 'Nova Campinas', 'SP');
+('Cidade Exemplo', 'Bairro Central', 'EX'),
+('Cidade Exemplo', 'Bairro Jardim', 'EX'),
+('Região Modelo', 'Área Comercial', 'EX'),
+('Região Modelo', 'Área Residencial', 'EX'),
+('Cidade Referência', 'Centro', 'EX');
 
 INSERT INTO caracteristicas (nome, categoria) VALUES 
 ('Piscina', 'Lazer'),

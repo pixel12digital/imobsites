@@ -41,14 +41,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_tenant'])) {
 
     try {
         if (empty($name)) {
-            throw new Exception('Nome do tenant é obrigatório.');
+            throw new Exception('Nome do cliente é obrigatório.');
         }
         if (empty($slug)) {
             $slug = generateSlug($name);
         }
         $exists = fetch("SELECT id FROM tenants WHERE slug = ? AND id != ?", [$slug, $tenant_id]);
         if ($exists) {
-            throw new Exception('Slug já utilizado por outro tenant.');
+            throw new Exception('Slug já utilizado por outro cliente.');
         }
         update('tenants', [
             'name' => $name,
@@ -99,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_domain'])) {
         }
         $exists = fetch("SELECT id FROM tenant_domains WHERE domain = ?", [$domain]);
         if ($exists) {
-            throw new Exception('Domínio já cadastrado em outro tenant.');
+            throw new Exception('Domínio já cadastrado em outro cliente.');
         }
         if ($is_primary) {
             query("UPDATE tenant_domains SET is_primary = 0 WHERE tenant_id = ?", [$tenant_id]);
@@ -170,7 +170,7 @@ include 'includes/header.php';
     </div>
     <div class="dropdown">
         <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-            Trocar tenant
+            Trocar cliente
         </button>
         <ul class="dropdown-menu dropdown-menu-end">
             <?php foreach ($tenants_all as $item): ?>
@@ -242,12 +242,12 @@ include 'includes/header.php';
     <div class="col-lg-6">
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white">
-                <h5 class="mb-0"><i class="fas fa-file-signature me-2 text-primary"></i>Informações do Tenant</h5>
+                <h5 class="mb-0"><i class="fas fa-file-signature me-2 text-primary"></i>Informações do Cliente</h5>
             </div>
             <div class="card-body">
                 <form method="POST">
                     <div class="mb-3">
-                        <label class="form-label">Nome do tenant</label>
+                        <label class="form-label">Nome do cliente</label>
                         <input type="text" class="form-control" name="name" value="<?php echo htmlspecialchars($tenant['name']); ?>" required>
                     </div>
                     <div class="mb-3">

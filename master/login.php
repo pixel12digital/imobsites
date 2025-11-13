@@ -37,47 +37,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title><?php echo MASTER_PANEL_NAME; ?> - Login</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-    <style>
-        body {
-            background: linear-gradient(135deg, #1C3B5A 0%, #1E232B 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .login-card {
-            background: rgba(255,255,255,0.95);
-            border-radius: 16px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-            padding: 2.5rem;
-            width: 100%;
-            max-width: 420px;
-        }
-        .login-logo {
-            height: 48px;
-            width: auto;
-        }
-        .btn-primary {
-            background: #F7931E;
-            border-color: #F7931E;
-            color: #1E232B;
-            font-weight: 600;
-        }
-        .btn-primary:hover {
-            background: #ff9f35;
-            border-color: #ff9f35;
-            color: #1E232B;
-        }
-        .form-control:focus {
-            border-color: #1C3B5A;
-            box-shadow: 0 0 0 0.2rem rgba(28, 59, 90, 0.25);
-        }
-        .text-muted {
-            color: #5A6473 !important;
-        }
-    </style>
+    <link href="assets/css/theme.css" rel="stylesheet">
+    <link href="assets/css/master.css" rel="stylesheet">
 </head>
-<body>
+<body class="master-login">
     <div class="login-card">
         <div class="text-center mb-4">
             <img src="../assets/logo-imob.png" alt="Imobsites" class="login-logo mb-3">

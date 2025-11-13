@@ -1,0 +1,116 @@
+:root {
+    /* Brand */
+    --brand-800: #152434;
+    --brand-700: #1C3B5A;
+    --brand-600: #254A70;
+
+    /* Accent */
+    --accent-700: #B45309;
+    --accent-600: #D97706;
+
+    /* Neutrals */
+    --neutral-900: #1E232B;
+    --neutral-700: #5A6473;
+    --neutral-500: #6B7280;
+    --neutral-300: #D1D5DB;
+    --neutral-200: #E5E7EB;
+    --neutral-150: #EDF1F6;
+    --neutral-100: #F5F7FA;
+    --white: #FFFFFF;
+
+    /* Header */
+    --header-bg-light: #F5F7FA;
+    --header-bg-dark: #0F2334;
+    --header-border: #E5EAF0;
+    --header-text-light: var(--brand-700);
+    --header-text-dark: var(--white);
+
+    /* States */
+    --success-700: #166534;
+    --warning-700: #92400E;
+    --danger-700: #7F1D1D;
+    --info-700: #1D4ED8;
+
+    --success-100: #DCFCE7;
+    --warning-100: #FEF3C7;
+    --danger-100: #FEE2E2;
+    --info-100: #DBEAFE;
+
+    /* Semantic aliases */
+    --bg-body: var(--neutral-100);
+    --bg-surface: var(--white);
+    --bg-muted: var(--neutral-150);
+    --bg-sidebar: var(--brand-800);
+
+    --text-strong: var(--neutral-900);
+    --text-primary: var(--brand-700);
+    --text-secondary: var(--neutral-700);
+    --text-inverse: var(--white);
+    --text-muted: color-mix(in srgb, var(--neutral-700) 85%, var(--white));
+
+    --border-default: var(--neutral-300);
+    --border-muted: var(--neutral-200);
+
+    --focus-ring-color: color-mix(in srgb, var(--brand-600) 35%, transparent);
+    --placeholder-color: var(--neutral-500);
+
+    --shadow-soft: 0 12px 24px color-mix(in srgb, var(--brand-700) 18%, transparent);
+
+    --link-color: var(--brand-600);
+    --link-hover-color: var(--brand-700);
+
+    /* Bootstrap variables overrides */
+    --bs-body-bg: var(--bg-body);
+    --bs-body-color: var(--text-strong);
+    --bs-heading-color: var(--text-strong);
+
+    --bs-primary: var(--brand-700);
+    --bs-primary-rgb: 28, 59, 90;
+    --bs-secondary: var(--neutral-700);
+    --bs-secondary-rgb: 90, 100, 115;
+    --bs-success: var(--success-700);
+    --bs-success-rgb: 22, 101, 52;
+    --bs-warning: var(--warning-700);
+    --bs-warning-rgb: 146, 64, 14;
+    --bs-danger: var(--danger-700);
+    --bs-danger-rgb: 127, 29, 29;
+    --bs-info: var(--info-700);
+    --bs-info-rgb: 29, 78, 216;
+    --bs-light: var(--neutral-100);
+    --bs-dark: var(--neutral-900);
+
+    --bs-white: var(--white);
+    --bs-border-color: var(--border-default);
+    --bs-border-radius: 0.75rem;
+    --bs-border-radius-lg: 1rem;
+    --bs-border-radius-sm: 0.5rem;
+
+    --bs-link-color: var(--link-color);
+    --bs-link-hover-color: var(--link-hover-color);
+}
+
+.app-header .navbar-brand .brand-logo {
+    display: inline-block !important;
+    max-height: 32px;
+    height: auto;
+    width: auto;
+    opacity: 1 !important;
+    visibility: visible !important;
+    filter: none !important;
+    mix-blend-mode: normal !important;
+    transform: none !important;
+}
+
+.app-header img.brand-logo[class*="brand-logo--light"] {
+    filter: none !important;
+}
+
+.app-header img.brand-logo[class*="brand-logo--dark"] {
+    filter: none !important;
+}
+
+.app-header .navbar-brand {
+    position: relative;
+    z-index: 1;
+}
+

@@ -268,10 +268,10 @@ foreach ($caracteristicas as $carac) {
                                     <button class="btn btn-primary btn-lg" onclick="openContactModal()">
                                         <i class="fas fa-phone me-2"></i>Falar com um Especialista
                                     </button>
-                                    <button class="btn btn-outline-primary" onclick="JTRImoveis.toggleFavorite(<?php echo $imovel['id']; ?>)">
+                                    <button class="btn btn-outline-primary" onclick="TemplateSite.toggleFavorite(<?php echo $imovel['id']; ?>)">
                                         <i class="far fa-heart me-2"></i>Favorito
                                     </button>
-                                    <button class="btn btn-outline-secondary" onclick="JTRImoveis.shareProperty(<?php echo $imovel['id']; ?>, 'whatsapp')">
+                                    <button class="btn btn-outline-secondary" onclick="TemplateSite.shareProperty(<?php echo $imovel['id']; ?>, 'whatsapp')">
                                         <i class="fab fa-whatsapp me-2"></i>Compartilhar
                                     </button>
                                 </div>
@@ -490,13 +490,13 @@ foreach ($caracteristicas as $carac) {
                     </div>
                     <div class="card-body">
                         <div class="d-grid gap-2">
-                            <button class="btn btn-success" onclick="JTRImoveis.shareProperty(<?php echo $imovel['id']; ?>, 'whatsapp')">
+                            <button class="btn btn-success" onclick="TemplateSite.shareProperty(<?php echo $imovel['id']; ?>, 'whatsapp')">
                                 <i class="fab fa-whatsapp me-2"></i>WhatsApp
                             </button>
-                            <button class="btn btn-primary" onclick="JTRImoveis.shareProperty(<?php echo $imovel['id']; ?>, 'facebook')">
+                            <button class="btn btn-primary" onclick="TemplateSite.shareProperty(<?php echo $imovel['id']; ?>, 'facebook')">
                                 <i class="fab fa-facebook me-2"></i>Facebook
                             </button>
-                            <button class="btn btn-info" onclick="JTRImoveis.shareProperty(<?php echo $imovel['id']; ?>, 'twitter')">
+                            <button class="btn btn-info" onclick="TemplateSite.shareProperty(<?php echo $imovel['id']; ?>, 'twitter')">
                                 <i class="fab fa-twitter me-2"></i>Twitter
                             </button>
                         </div>
@@ -575,18 +575,30 @@ foreach ($caracteristicas as $carac) {
                     <p class="text-muted">Especialista Responsável</p>
                 </div>
                 <div class="d-grid gap-2">
-                    <a href="mailto:<?php echo $imovel['corretor_email']; ?>" class="btn btn-primary">
+                    <a href="mailto:<?php echo htmlspecialchars($imovel['corretor_email'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-primary">
                         <i class="fas fa-envelope me-2"></i>Enviar E-mail
                     </a>
-                    <?php if ($imovel['corretor_telefone']): ?>
-                        <a href="tel:<?php echo $imovel['corretor_telefone']; ?>" class="btn btn-success">
+                    <?php if (!empty($imovel['corretor_telefone'])): ?>
+                        <a href="tel:<?php echo preg_replace('/\D+/', '', $imovel['corretor_telefone']); ?>" class="btn btn-success">
                             <i class="fas fa-phone me-2"></i>Ligar
                         </a>
                     <?php endif; ?>
-                    <a href="https://wa.me/5511999999999?text=Olá! Gostaria de saber mais sobre o imóvel: <?php echo urlencode($imovel['titulo']); ?>" 
-                       target="_blank" class="btn btn-success">
-                        <i class="fab fa-whatsapp me-2"></i>WhatsApp
-                    </a>
+                    <?php
+                        $corretorWhatsapp = $imovel['corretor_whatsapp'] ?? '';
+                        $fallbackWhatsapp = PHONE_WHATSAPP_VENDA ?: '';
+                        $whatsappTarget = $corretorWhatsapp ?: $fallbackWhatsapp;
+                        $whatsappDigits = $whatsappTarget ? preg_replace('/\D+/', '', $whatsappTarget) : '';
+                    ?>
+                    <?php if (!empty($whatsappDigits)): ?>
+                        <a href="https://wa.me/<?php echo $whatsappDigits; ?>?text=Olá! Gostaria de saber mais sobre o imóvel: <?php echo urlencode($imovel['titulo']); ?>" 
+                           target="_blank" class="btn btn-success">
+                            <i class="fab fa-whatsapp me-2"></i>WhatsApp
+                        </a>
+                    <?php else: ?>
+                        <span class="btn btn-outline-secondary disabled">
+                            <i class="fab fa-whatsapp me-2"></i>Configure um número de WhatsApp para contato
+                        </span>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -692,7 +704,7 @@ Banheiros: <?php echo $imovel['banheiros']; ?>
     window.open(whatsappUrl, '_blank');
     
     // Mostrar notificação de sucesso
-    JTRImoveis.showNotification('Redirecionando para WhatsApp!', 'success');
+    TemplateSite.showNotification('Redirecionando para WhatsApp!', 'success');
     
     // Resetar formulário
     this.reset();

@@ -1,0 +1,75 @@
+:root {
+    /* Base brand palette */
+    --brand-700: hsl(210, 53%, 23%);
+    --brand-600: hsl(210, 50%, 29%);
+
+    /* Accent palette */
+    --accent-700: hsl(26, 90%, 37%);
+    --accent-600: hsl(32, 95%, 44%);
+
+    /* Neutral palette */
+    --neutral-900: hsl(217, 18%, 14%);
+    --neutral-700: hsl(216, 12%, 40%);
+    --neutral-300: hsl(216, 20%, 85%);
+    --neutral-200: hsl(231, 26%, 89%);
+    --neutral-150: hsl(210, 16%, 93%);
+    --neutral-100: hsl(216, 33%, 97%);
+    --neutral-000: hsl(0, 0%, 100%);
+
+    /* State palette */
+    --state-success-700: hsl(143, 64%, 24%);
+    --state-warning-700: hsl(23, 83%, 31%);
+    --state-danger-700: hsl(0, 63%, 31%);
+    --state-info-700: hsl(224, 76%, 48%);
+
+    /* Semantic aliases */
+    --brand-primary: var(--brand-700);
+    --brand-secondary: var(--brand-600);
+
+    --accent-primary: var(--accent-700);
+    --accent-secondary: var(--accent-600);
+
+    --bg-body: var(--neutral-100);
+    --bg-surface: var(--neutral-000);
+    --bg-muted: var(--neutral-150);
+    --bg-elevated: var(--neutral-000);
+    --bg-sidebar: var(--neutral-100);
+
+    --text-primary: var(--brand-700);
+    --text-secondary: var(--neutral-700);
+    --text-strong: var(--neutral-900);
+    --text-inverse: var(--neutral-000);
+    --text-accent: var(--accent-primary);
+
+    --border-strong: var(--neutral-300);
+    --border-muted: var(--neutral-200);
+
+    --state-success: var(--state-success-700);
+    --state-warning: var(--state-warning-700);
+    --state-danger: var(--state-danger-700);
+    --state-info: var(--state-info-700);
+
+    --shadow-color: 210deg 30% 20%;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-body: var(--neutral-900);
+        --bg-surface: hsl(220, 20%, 18%);
+        --bg-muted: hsl(220, 16%, 26%);
+        --bg-elevated: hsl(220, 20%, 22%);
+        --bg-sidebar: hsl(220, 20%, 20%);
+
+        --text-primary: var(--neutral-100);
+        --text-secondary: hsl(220, 20%, 75%);
+        --text-strong: var(--neutral-000);
+        --text-inverse: var(--neutral-900);
+        --text-accent: var(--accent-secondary);
+
+        --border-strong: hsl(220, 20%, 30%);
+        --border-muted: hsl(220, 20%, 24%);
+
+        --shadow-color: 220deg 40% 5%;
+    }
+}
+

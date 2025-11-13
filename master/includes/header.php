@@ -7,6 +7,13 @@ if (!isset($_SESSION['master_logged_in']) || $_SESSION['master_logged_in'] !== t
     header('Location: login.php');
     exit;
 }
+
+$headerTheme = isset($headerTheme) && $headerTheme === 'dark' ? 'dark' : 'light';
+$navbarTone = $headerTheme === 'dark' ? 'navbar-dark' : 'navbar-light';
+$headerClass = $headerTheme === 'dark' ? 'is-dark' : 'is-light';
+$isDark = $headerTheme === 'dark';
+$assetsBase = '../assets';
+$logoFile = $isDark ? 'logo-imobsites-white.svg' : 'logo-imobsites-full.svg';
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -16,55 +23,30 @@ if (!isset($_SESSION['master_logged_in']) || $_SESSION['master_logged_in'] !== t
     <title><?php echo MASTER_PANEL_NAME; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f5f6fa;
-        }
-        .sidebar {
-            min-height: 100vh;
-            background: #1C3B5A;
-        }
-        .sidebar .nav-link {
-            color: rgba(245, 247, 250, 0.8);
-        }
-        .sidebar .nav-link.active {
-            background: rgba(247, 147, 30, 0.18);
-            color: #fff;
-            border-radius: .375rem;
-        }
-        .navbar-brand span {
-            font-weight: 600;
-        }
-        .navbar-brand img {
-            height: 34px;
-            width: auto;
-        }
-        .navbar {
-            background: linear-gradient(135deg, #1C3B5A 0%, #1E232B 100%);
-        }
-        .btn-outline-light {
-            border-color: rgba(245, 247, 250, 0.6);
-            color: #F5F7FA;
-        }
-        .btn-outline-light:hover {
-            background-color: #F7931E;
-            border-color: #F7931E;
-            color: #1E232B;
-        }
-    </style>
+    <link href="assets/css/theme.css" rel="stylesheet">
+    <link href="assets/css/master.css" rel="stylesheet">
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
+<nav class="navbar navbar-expand-lg app-header <?php echo $navbarTone . ' ' . $headerClass; ?>" data-header-theme="<?php echo $headerTheme; ?>">
     <div class="container-fluid">
         <a class="navbar-brand d-flex align-items-center" href="index.php">
-            <img src="../assets/logo-imob.png" alt="Imobsites">
+            <img
+                id="header-logo"
+                class="brand-logo <?php echo $isDark ? 'brand-logo--dark' : 'brand-logo--light'; ?>"
+                src="<?php echo $assetsBase . '/' . $logoFile; ?>"
+                alt="Imobsites"
+                width="118"
+                height="32"
+                decoding="async"
+            >
             <span class="ms-2"><?php echo MASTER_PANEL_NAME; ?></span>
         </a>
-        <div class="d-flex align-items-center text-white">
-            <span class="me-3">
-                <i class="fas fa-user-shield me-2"></i>Master Admin
-            </span>
-            <a href="logout.php" class="btn btn-outline-light btn-sm">
+        <div class="header-controls">
+            <div class="header-account" tabindex="0" aria-label="Usuário Master Admin">
+                <i class="fas fa-user-shield"></i>
+                <span>Master Admin</span>
+            </div>
+            <a href="logout.php" class="btn btn-logout btn-sm">
                 <i class="fas fa-sign-out-alt me-1"></i>Sair
             </a>
         </div>
@@ -85,7 +67,7 @@ if (!isset($_SESSION['master_logged_in']) || $_SESSION['master_logged_in'] !== t
                     </li>
                     <li class="nav-item">
                         <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) === 'tenant.php' ? 'active' : ''; ?>" href="tenant.php">
-                            <i class="fas fa-building me-2"></i>Tenants
+                            <i class="fas fa-building me-2"></i>Clientes
                         </a>
                     </li>
                 </ul>

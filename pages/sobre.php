@@ -13,8 +13,8 @@ $total_clientes = fetch("SELECT COUNT(*) as total FROM clientes")['total'];
     <div class="container">
         <div class="row align-items-center">
             <div class="col-12 text-center">
-                <h1 class="h2 mb-2">Sobre a <?php echo SITE_NAME; ?></h1>
-                <p class="mb-0">Conheça nossa história, missão e valores</p>
+                <h1 class="h2 mb-2">Sobre a <?php echo SITE_NAME ?: 'sua imobiliária'; ?></h1>
+                <p class="mb-0">Utilize esta página para contar a trajetória e os diferenciais da sua empresa</p>
             </div>
         </div>
     </div>
@@ -28,29 +28,26 @@ $total_clientes = fetch("SELECT COUNT(*) as total FROM clientes")['total'];
                 <div class="history-content">
                     <h2 class="mb-4">Nossa História</h2>
                     <p class="lead mb-4">
-                        <strong>Construtora Rossi e Rossi e Imobsites Incorporadora em São José dos Campos</strong>
+                        Apresente aqui a história da sua imobiliária: como tudo começou, quais conquistas já foram alcançadas e de que forma você apoia seus clientes.
                     </p>
                     <p class="mb-4">
-                        Desde 1991, a Imobsites transforma projetos em realidade, ajudando famílias a conquistarem a casa própria e empresários a encontrarem o espaço ideal para seus negócios.
+                        Use este espaço para destacar diferenciais, especialidades e locais de atuação. Ao ativar um tenant, substitua os textos por informações reais e mostre como sua equipe atende compradores, vendedores e investidores.
                     </p>
                     <p class="mb-4">
-                        Somos uma empresa familiar, com mais de 30 anos de experiência em construção e incorporação de imóveis residenciais e comerciais, sempre com qualidade, segurança e valorização.
-                    </p>
-                    <p class="mb-4">
-                        <strong>Residenciais:</strong> casas e apartamentos planejados para oferecer conforto, bem-estar e a realização do sonho da casa própria.<br>
-                        <strong>Comerciais:</strong> empreendimentos que unem localização estratégica e estrutura ideal para o crescimento dos negócios.
+                        <strong>Imóveis residenciais:</strong> descreva perfis, regiões e serviços oferecidos.<br>
+                        <strong>Imóveis comerciais:</strong> destaque oportunidades e o suporte prestado a empresários e investidores.
                     </p>
                     <div class="mt-4">
-                        <h5 class="mb-3">Por que escolher a Imobsites?</h5>
+                        <h5 class="mb-3">Por que escolher nossa equipe?</h5>
                         <ul class="list-unstyled">
-                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Tradição e credibilidade desde 1991</li>
-                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Empreendimentos que valorizam ao longo do tempo</li>
-                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Atendimento próximo e personalizado</li>
-                            <li class="mb-0"><i class="fas fa-check text-success me-2"></i>Soluções para quem deseja morar, investir ou empreender</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Destaque benefícios reais da sua imobiliária</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Mostre certificações, cases ou áreas de atuação</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Explique como o atendimento é conduzido</li>
+                            <li class="mb-0"><i class="fas fa-check text-success me-2"></i>Apresente soluções para diferentes perfis de clientes</li>
                         </ul>
                     </div>
                     <p class="mb-0 mt-4">
-                        Entre em contato e descubra como podemos ajudar você a conquistar seu imóvel residencial ou comercial.
+                        Personalize este parágrafo com um convite direto para que visitantes entrem em contato com sua equipe.
                     </p>
                 </div>
             </div>
@@ -82,9 +79,7 @@ $total_clientes = fetch("SELECT COUNT(*) as total FROM clientes")['total'];
                         </div>
                         <h4 class="card-title">Nossa Missão</h4>
                         <p class="card-text">
-                            Transformar projetos em realidade, ajudando famílias a conquistarem a casa própria 
-                            e empresários a encontrarem o espaço ideal para seus negócios, sempre com qualidade, 
-                            segurança e valorização em cada empreendimento.
+                            Descreva de forma objetiva qual é o propósito da sua imobiliária, quais clientes atende e que tipo de experiência deseja entregar.
                         </p>
                     </div>
                 </div>
@@ -98,9 +93,7 @@ $total_clientes = fetch("SELECT COUNT(*) as total FROM clientes")['total'];
                         </div>
                         <h4 class="card-title">Nossa Visão</h4>
                         <p class="card-text">
-                            Continuar sendo referência em São José dos Campos como empresa familiar de tradição 
-                            e credibilidade, expandindo nossa atuação em empreendimentos residenciais e comerciais 
-                            que valorizam ao longo do tempo.
+                            Utilize esta seção para compartilhar onde a empresa deseja chegar e como pretende evoluir nos próximos anos.
                         </p>
                     </div>
                 </div>
@@ -114,11 +107,11 @@ $total_clientes = fetch("SELECT COUNT(*) as total FROM clientes")['total'];
                         </div>
                         <h4 class="card-title">Nossos Valores</h4>
                         <ul class="list-unstyled text-start">
-                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Tradição e Credibilidade (desde 1991)</li>
-                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Qualidade e Segurança na Construção</li>
-                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Atendimento Próximo e Personalizado</li>
-                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Valorização dos Empreendimentos</li>
-                            <li class="mb-0"><i class="fas fa-check text-success me-2"></i>Compromisso com Famílias e Empresários</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Liste valores que orientam sua operação</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Compartilhe compromissos com clientes e parceiros</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Inclua diferenciais culturais ou estratégicos</li>
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Mostre como a equipe mantém a qualidade do serviço</li>
+                            <li class="mb-0"><i class="fas fa-check text-success me-2"></i>Adapte este conteúdo às prioridades da sua marca</li>
                         </ul>
                     </div>
                 </div>
@@ -134,9 +127,9 @@ $total_clientes = fetch("SELECT COUNT(*) as total FROM clientes")['total'];
 <!-- CTA -->
 <section class="cta-section py-5 bg-primary text-white">
     <div class="container text-center">
-        <h3 class="mb-3">Conheça Nossos Imóveis</h3>
+        <h3 class="mb-3">Personalize sua chamada para ação</h3>
         <p class="lead mb-4">
-            Agende uma visita e descubra nossos projetos desenvolvidos com qualidade e seriedade!
+            Use esta área para convidar visitantes a falar com sua equipe comercial, agendar uma visita ou cadastrar um imóvel.
         </p>
         <div class="d-flex justify-content-center gap-3 flex-wrap">
             <a href="<?php echo getPagePath('contato'); ?>" class="btn btn-light btn-lg">
@@ -145,10 +138,16 @@ $total_clientes = fetch("SELECT COUNT(*) as total FROM clientes")['total'];
             <a href="<?php echo getPagePath('imoveis'); ?>" class="btn btn-outline-light btn-lg">
                 <i class="fas fa-search me-2"></i>Ver Imóveis
             </a>
-            <a href="https://wa.me/5511999999999?text=Olá! Gostaria de agendar uma visita." 
-               target="_blank" class="btn btn-success btn-lg">
-                <i class="fab fa-whatsapp me-2"></i>WhatsApp
-            </a>
+            <?php if (!empty(PHONE_WHATSAPP_VENDA)): ?>
+                <a href="https://wa.me/<?php echo PHONE_WHATSAPP_VENDA; ?>?text=Olá! Gostaria de conversar com a equipe de vendas." 
+                   target="_blank" class="btn btn-success btn-lg">
+                    <i class="fab fa-whatsapp me-2"></i>WhatsApp
+                </a>
+            <?php else: ?>
+                <span class="text-white-50 d-inline-flex align-items-center">
+                    <i class="fab fa-whatsapp me-2"></i>Configure o WhatsApp de contato para exibir aqui
+                </span>
+            <?php endif; ?>
         </div>
     </div>
 </section>

@@ -2,7 +2,9 @@
 // Página de Imóveis - imobsites
 
 // Página de Listagem de Imóveis com Filtros Avançados
-$page_title = 'Imóveis Disponíveis - ' . SITE_NAME;
+$page_title = 'Imóveis Disponíveis' . (SITE_NAME ? ' - ' . SITE_NAME : '');
+$contactName = SITE_NAME ?: 'Especialista';
+$contactPhoneDigits = PHONE_VENDA ? preg_replace('/\D+/', '', PHONE_VENDA) : '';
 
 // Processar filtros
 $tipo_id = isset($_GET['tipo_imovel']) ? (int)$_GET['tipo_imovel'] : (isset($_GET['tipo']) ? (int)$_GET['tipo'] : 0);
@@ -553,10 +555,14 @@ if ($preco_locacao_max > 0) $filtros_ativos[] = "Preço máximo (Locação): " .
                                                class="btn btn-primary btn-sm">
                                                 <i class="fas fa-eye"></i> Ver Detalhes
                                             </a>
-                                            <button class="btn btn-outline-success btn-sm" 
-                                                    onclick="contatarCorretor('imobsites', '<?= PHONE_VENDA ?>')">
-                                                <i class="fas fa-phone"></i> Falar com um Especialista
-                                            </button>
+                                            <?php if (!empty($contactPhoneDigits)): ?>
+                                                <button class="btn btn-outline-success btn-sm" 
+                                                        onclick="TemplateSite.openWhatsApp('<?php echo $contactPhoneDigits; ?>', '<?php echo htmlspecialchars($contactName, ENT_QUOTES, 'UTF-8'); ?>')">
+                                                    <i class="fas fa-phone"></i> Falar com um Especialista
+                                                </button>
+                                            <?php else: ?>
+                                                <span class="text-muted small text-center">Configure o telefone de contato no painel.</span>
+                                            <?php endif; ?>
                                             <button class="btn btn-outline-info btn-sm" 
                                                     onclick="adicionarAoComparador(<?= $imovel['id'] ?>)">
                                                 <i class="fas fa-balance-scale"></i> Comparar
@@ -671,13 +677,6 @@ function toggleView() {
 function exportarResultados() {
     // Implementar exportação para CSV/PDF
     mostrarNotificacao('Funcionalidade de exportação em desenvolvimento', 'info');
-}
-
-// Contatar especialista
-function contatarCorretor(nome, telefone) {
-    const mensagem = `Olá! Gostaria de saber mais sobre um imóvel. Especialista: ${nome}`;
-    const whatsappUrl = `https://wa.me/55${telefone.replace(/\D/g, '')}?text=${encodeURIComponent(mensagem)}`;
-    window.open(whatsappUrl, '_blank');
 }
 
 // Adicionar ao comparador

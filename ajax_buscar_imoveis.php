@@ -27,6 +27,9 @@ try {
     $destaque = isset($_GET['destaque']) ? (bool)$_GET['destaque'] : false;
     $busca = isset($_GET['busca']) ? cleanInput($_GET['busca']) : '';
 
+    $contactName = SITE_NAME ?: 'Especialista';
+    $contactPhoneDigits = PHONE_VENDA ? preg_replace('/\D+/', '', PHONE_VENDA) : '';
+
     // Construir query SQL
     $sql = "SELECT i.*, t.nome as tipo_nome, l.cidade, l.bairro, l.estado,
                    CONCAT('imoveis/', i.id, '/', (SELECT arquivo FROM fotos_imovel WHERE imovel_id = i.id ORDER BY ordem ASC LIMIT 1)) as foto_principal
@@ -286,10 +289,20 @@ try {
                                    class="btn btn-primary">
                                     <i class="fas fa-eye me-1"></i> Ver Detalhes
                                 </a>
+                                ';
+
+            if (!empty($contactPhoneDigits)) {
+                $html .= '
                                 <button class="btn btn-outline-success btn-sm"
-                                        onclick="contatarCorretor('imobsites', \'' . PHONE_VENDA . '\')">
+                                        onclick="TemplateSite.openWhatsApp(\'' . $contactPhoneDigits . '\', \'' . addslashes($contactName) . '\')">
                                     <i class="fas fa-phone"></i> Falar com um Especialista
-                                </button>
+                                </button>';
+            } else {
+                $html .= '
+                                <span class="text-muted small text-center d-block">Configure o telefone de contato no painel.</span>';
+            }
+
+            $html .= '
                             </div>
                         </div>
                     </div>

@@ -105,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_tenant'])) {
 
         $pdo->commit();
 
-        $success = 'Tenant criado com sucesso!';
+        $success = 'Cliente criado com sucesso!';
 
     } catch (Exception $e) {
         $pdo->rollBack();
@@ -136,16 +136,18 @@ $tenants = fetchAll("
     ORDER BY t.created_at DESC
 ");
 
+$loadingTenants = $loadingTenants ?? false;
+
 include 'includes/header.php';
 ?>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-center mb-3 page-header">
     <div>
-        <h1 class="h3 mb-1">Visão Geral</h1>
-        <p class="text-muted mb-0">Gerencie clientes, domínios e configurações da plataforma.</p>
+        <h1 class="page-title mb-1">Visão Geral</h1>
+        <p class="page-subtitle mb-0">Gerencie clientes, domínios e configurações da plataforma.</p>
     </div>
     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTenantModal">
-        <i class="fas fa-plus me-2"></i>Novo Tenant
+        <i class="fas fa-plus me-2"></i>Novo Cliente
     </button>
 </div>
 
@@ -168,128 +170,141 @@ include 'includes/header.php';
     </div>
 <?php endif; ?>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary p-3 me-3">
-                        <i class="fas fa-building fa-lg"></i>
-                    </div>
-                    <div>
-                        <p class="text-muted mb-1">Total de Tenants</p>
-                        <h4 class="mb-0"><?php echo $summary['total_tenants'] ?? 0; ?></h4>
-                    </div>
+<div class="row g-3 mb-4 kpi-grid">
+    <div class="col-md-4 col-sm-6">
+        <div class="card kpi-card">
+            <div class="card-body d-flex align-items-center">
+                <div class="kpi-icon kpi-icon--brand me-3">
+                    <i class="fas fa-building"></i>
+                </div>
+                <div class="kpi-content">
+                    <p class="kpi-label">Total de Clientes</p>
+                    <span class="kpi-value"><?php echo $summary['total_tenants'] ?? 0; ?></span>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="rounded-circle bg-success bg-opacity-10 text-success p-3 me-3">
-                        <i class="fas fa-play-circle fa-lg"></i>
-                    </div>
-                    <div>
-                        <p class="text-muted mb-1">Ativos</p>
-                        <h4 class="mb-0"><?php echo $summary['active_tenants'] ?? 0; ?></h4>
-                    </div>
+    <div class="col-md-4 col-sm-6">
+        <div class="card kpi-card">
+            <div class="card-body d-flex align-items-center">
+                <div class="kpi-icon kpi-icon--success me-3">
+                    <i class="fas fa-play-circle"></i>
+                </div>
+                <div class="kpi-content">
+                    <p class="kpi-label">Ativos</p>
+                    <span class="kpi-value"><?php echo $summary['active_tenants'] ?? 0; ?></span>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="rounded-circle bg-warning bg-opacity-10 text-warning p-3 me-3">
-                        <i class="fas fa-pause-circle fa-lg"></i>
-                    </div>
-                    <div>
-                        <p class="text-muted mb-1">Suspensos</p>
-                        <h4 class="mb-0"><?php echo $summary['suspended_tenants'] ?? 0; ?></h4>
-                    </div>
+    <div class="col-md-4 col-sm-6">
+        <div class="card kpi-card">
+            <div class="card-body d-flex align-items-center">
+                <div class="kpi-icon kpi-icon--warning me-3">
+                    <i class="fas fa-pause-circle"></i>
+                </div>
+                <div class="kpi-content">
+                    <p class="kpi-label">Suspensos</p>
+                    <span class="kpi-value"><?php echo $summary['suspended_tenants'] ?? 0; ?></span>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="card border-0 shadow-sm mb-4">
+<div class="card data-card mb-4">
     <div class="card-header bg-white py-3">
         <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="fas fa-list me-2 text-primary"></i>Tenants cadastrados</h5>
+            <h5 class="mb-0"><i class="fas fa-list me-2 text-primary"></i>Clientes cadastrados</h5>
         </div>
     </div>
     <div class="card-body">
-        <?php if (empty($tenants)): ?>
-            <div class="text-center py-5">
-                <i class="fas fa-building-circle-xmark fa-3x text-muted mb-3"></i>
-                <p class="text-muted mb-0">Nenhum cliente cadastrado até o momento.</p>
+        <?php if ($loadingTenants): ?>
+            <div class="table-skeleton" aria-hidden="true">
+                <?php for ($i = 0; $i < 3; $i++): ?>
+                    <div class="skeleton-row">
+                        <?php for ($c = 0; $c < 5; $c++): ?>
+                            <span class="skeleton-cell"></span>
+                        <?php endfor; ?>
+                    </div>
+                <?php endfor; ?>
+            </div>
+        <?php elseif (empty($tenants)): ?>
+            <div class="empty-state">
+                <div class="empty-state__icon">
+                    <i class="fas fa-building-circle-exclamation"></i>
+                </div>
+                <h3 class="empty-state__title">Nenhum cliente cadastrado</h3>
+                <p class="empty-state__description">Comece criando um cliente para acompanhar domínios e usuários da plataforma.</p>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTenantModal">
+                    <i class="fas fa-plus me-2"></i>Novo Cliente
+                </button>
             </div>
         <?php else: ?>
-            <div class="table-responsive">
-                <table class="table align-middle">
+            <div class="table-responsive tenants-table">
+                <table class="table align-middle table-modern">
                     <thead>
                     <tr>
                         <th>Cliente</th>
                         <th>Domínio</th>
-                        <th>Usuários</th>
-                        <th>Imóveis</th>
-                        <th>Leads pendentes</th>
+                        <th class="text-end col-optional-md">Usuários</th>
+                        <th class="text-end col-optional-md">Imóveis</th>
+                        <th class="col-optional">Leads pendentes</th>
                         <th>Status</th>
-                        <th>Desde</th>
-                        <th></th>
+                        <th class="col-optional">Desde</th>
+                        <th class="text-end">Ações</th>
                     </tr>
                     </thead>
                     <tbody>
                     <?php foreach ($tenants as $tenant): ?>
                         <tr>
-                            <td>
-                                <strong><?php echo htmlspecialchars($tenant['name']); ?></strong><br>
-                                <small class="text-muted"><?php echo htmlspecialchars($tenant['site_email'] ?? ''); ?></small>
+                            <td data-label="Cliente" class="tenant-name">
+                                <a href="tenant.php?id=<?php echo $tenant['id']; ?>" class="tenant-link">
+                                    <strong><?php echo htmlspecialchars($tenant['name']); ?></strong>
+                                </a>
+                                <span class="tenant-meta text-muted"><?php echo htmlspecialchars($tenant['site_email'] ?? ''); ?></span>
                             </td>
-                            <td>
-                                <i class="fas fa-globe text-muted me-1"></i>
-                                <?php echo htmlspecialchars($tenant['primary_domain']); ?>
-                                <br>
+                            <td data-label="Domínio" class="domain-cell">
+                                <span class="domain-main">
+                                    <i class="fas fa-globe text-muted"></i>
+                                    <?php echo htmlspecialchars($tenant['primary_domain']); ?>
+                                </span>
                                 <small class="text-muted"><?php echo $tenant['total_domains']; ?> domínios</small>
                             </td>
-                            <td>
-                                <span class="badge text-bg-primary"><?php echo $tenant['total_users']; ?></span>
+                            <td class="col-nums col-optional-md" data-label="Usuários">
+                                <?php echo $tenant['total_users']; ?>
                             </td>
-                            <td>
-                                <span class="badge text-bg-secondary"><?php echo $tenant['total_properties']; ?></span>
+                            <td class="col-nums col-optional-md" data-label="Imóveis">
+                                <?php echo $tenant['total_properties']; ?>
                             </td>
-                            <td>
+                            <td class="col-optional" data-label="Leads pendentes">
                                 <?php if ((int)$tenant['total_leads_nao_lidos'] > 0): ?>
-                                    <span class="badge text-bg-danger">
+                                    <span class="status-chip status-chip--danger">
                                         <?php echo $tenant['total_leads_nao_lidos']; ?> novos
                                     </span>
                                 <?php else: ?>
-                                    <span class="badge text-bg-success">Em dia</span>
+                                    <span class="status-chip status-chip--success">Em dia</span>
                                 <?php endif; ?>
                             </td>
-                            <td>
+                            <td data-label="Status">
                                 <?php if ($tenant['status'] === 'active'): ?>
-                                    <span class="badge text-bg-success">Ativo</span>
+                                    <span class="status-chip status-chip--success">Ativo</span>
                                 <?php else: ?>
-                                    <span class="badge text-bg-warning text-dark">Suspenso</span>
+                                    <span class="status-chip status-chip--warning">Suspenso</span>
                                 <?php endif; ?>
                             </td>
-                            <td>
+                            <td class="col-optional" data-label="Desde">
                                 <small class="text-muted">
                                     <?php echo formatDateTime($tenant['created_at']); ?>
                                 </small>
                             </td>
-                            <td class="text-end">
-                                <div class="btn-group">
-                                    <a href="tenant.php?id=<?php echo $tenant['id']; ?>" class="btn btn-outline-primary btn-sm">
+                            <td class="text-end" data-label="Ações">
+                                <div class="table-actions d-flex">
+                                    <a href="tenant.php?id=<?php echo $tenant['id']; ?>" class="btn btn-outline btn-sm">
                                         <i class="fas fa-gear me-1"></i>Configurar
                                     </a>
-                                    <a href="../admin/login.php?tenant=<?php echo urlencode($tenant['slug']); ?>" class="btn btn-outline-secondary btn-sm">
-                                        <i class="fas fa-user-secret me-1"></i>Impersonar
+                                    <a href="../admin/login.php?tenant=<?php echo urlencode($tenant['slug']); ?>" class="btn btn-outline btn-sm">
+                                        <i class="fas fa-user-check me-1"></i>Acessar como cliente
                                     </a>
                                 </div>
                             </td>
@@ -302,14 +317,14 @@ include 'includes/header.php';
     </div>
 </div>
 
-<!-- Modal criação tenant -->
+<!-- Modal criação cliente -->
 <div class="modal fade" id="createTenantModal" tabindex="-1" aria-labelledby="createTenantModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <form method="POST">
                 <div class="modal-header">
                     <h5 class="modal-title" id="createTenantModalLabel">
-                        <i class="fas fa-plus-circle me-2 text-primary"></i>Novo Tenant
+                        <i class="fas fa-plus-circle me-2 text-primary"></i>Novo Cliente
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -401,7 +416,7 @@ include 'includes/header.php';
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" name="create_tenant" value="1" class="btn btn-primary">
-                        <i class="fas fa-save me-1"></i>Salvar Tenant
+                        <i class="fas fa-save me-1"></i>Salvar Cliente
                     </button>
                 </div>
             </form>

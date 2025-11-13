@@ -7,6 +7,8 @@ $imoveis_filtrados = [];
 
 // Sempre carregar imóveis (com ou sem filtros)
 $carregar_imoveis = true;
+$contactName = SITE_NAME ?: 'Especialista';
+$contactPhoneDigits = PHONE_VENDA ? preg_replace('/\D+/', '', PHONE_VENDA) : '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && !empty($_GET)) {
     $filtros_aplicados = true;
@@ -186,9 +188,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && !empty($_GET)) {
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-6">
-                <h1 class="display-4 fw-bold mb-4">Encontre seu Lar dos Sonhos</h1>
-                <p class="lead mb-4">Com paixão, dedicação e recursos para ajudar nossos clientes a atingir seus objetivos de compra e venda. Estamos com você em cada passo do caminho.</p>
-                <a href="<?php echo getPagePath('imoveis'); ?>" class="btn btn-light btn-lg px-4">Explorar Imóveis</a>
+                <h1 class="display-4 fw-bold mb-4">Personalize o destaque da sua imobiliária</h1>
+                <p class="lead mb-4">Utilize esta área para comunicar o principal diferencial do seu negócio. Edite os textos e conecte seus serviços ao ativar o tenant.</p>
+                <a href="<?php echo getPagePath('imoveis'); ?>" class="btn btn-light btn-lg px-4">Ver catálogo de imóveis</a>
             </div>
             <div class="col-lg-6">
                 <div class="hero-image text-center">
@@ -529,10 +531,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && !empty($_GET)) {
                                            class="btn btn-primary">
                                             <i class="fas fa-eye me-1"></i> Ver Detalhes
                                         </a>
-                                        <button class="btn btn-outline-success btn-sm"
-                                                onclick="contatarCorretor('imobsites', '<?= PHONE_VENDA ?>')">
-                                            <i class="fas fa-phone"></i> Falar com um Especialista
-                                        </button>
+                                        <?php if (!empty($contactPhoneDigits)): ?>
+                                            <button class="btn btn-outline-success btn-sm"
+                                                    onclick="TemplateSite.openWhatsApp('<?php echo $contactPhoneDigits; ?>', '<?php echo htmlspecialchars($contactName, ENT_QUOTES, 'UTF-8'); ?>')">
+                                                <i class="fas fa-phone"></i> Falar com um Especialista
+                                            </button>
+                                        <?php else: ?>
+                                            <span class="text-muted small text-center d-block">Configure o telefone de contato no painel.</span>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </div>
@@ -658,30 +664,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && !empty($_GET)) {
                 // Imóveis de exemplo quando não há dados no banco
                 $example_properties = [
                     [
-                        'titulo' => 'Casa em Condomínio com 3 Suítes',
-                        'preco' => 1850000.00,
-                        'bairro' => 'Vila Madalena',
-                        'cidade' => 'São Paulo',
+                        'titulo' => 'Imóvel Residencial Exemplo',
+                        'preco' => 0.00,
+                        'bairro' => 'Bairro Exemplo',
+                        'cidade' => 'Cidade Exemplo',
                         'quartos' => 3,
                         'banheiros' => 4,
                         'vagas' => 4,
                         'area_total' => 200
                     ],
                     [
-                        'titulo' => 'Apartamento com Vista para o Parque',
-                        'preco' => 850000.00,
-                        'bairro' => 'Pinheiros',
-                        'cidade' => 'São Paulo',
+                        'titulo' => 'Apartamento Exemplo',
+                        'preco' => 0.00,
+                        'bairro' => 'Bairro Exemplo',
+                        'cidade' => 'Cidade Exemplo',
                         'quartos' => 2,
                         'banheiros' => 2,
                         'vagas' => 2,
                         'area_total' => 85
                     ],
                     [
-                        'titulo' => 'Chácara com Área Gourmet',
-                        'preco' => 750000.00,
-                        'bairro' => 'Atibaia',
-                        'cidade' => 'São Paulo',
+                        'titulo' => 'Imóvel Comercial Exemplo',
+                        'preco' => 0.00,
+                        'bairro' => 'Bairro Exemplo',
+                        'cidade' => 'Cidade Exemplo',
                         'quartos' => 3,
                         'banheiros' => 3,
                         'vagas' => 5,

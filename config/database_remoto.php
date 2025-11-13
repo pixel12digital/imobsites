@@ -1,12 +1,16 @@
 <?php
-// Configuração FORÇADA para usar banco remoto do Hostinger
+// Configuração para usar um banco de dados remoto
 // Use este arquivo quando quiser sempre usar o banco remoto
 
-// Configurações do banco de dados REMOTO (Hostinger)
-define('DB_HOST', 'auth-db791.hstgr.io');
-define('DB_NAME', 'u891304621_jtrimoveis');
-define('DB_USER', 'u891304621_jtrimoveis');
-define('DB_PASS', 'Los@ngo#081081');
+// Configurações do banco de dados REMOTO
+define('DB_HOST', getenv('REMOTE_DB_HOST') ?: '');
+define('DB_NAME', getenv('REMOTE_DB_NAME') ?: '');
+define('DB_USER', getenv('REMOTE_DB_USER') ?: '');
+define('DB_PASS', getenv('REMOTE_DB_PASS') ?: '');
+
+if (!DB_HOST || !DB_NAME || !DB_USER || !DB_PASS) {
+    die('Configure as variáveis REMOTE_DB_HOST, REMOTE_DB_NAME, REMOTE_DB_USER e REMOTE_DB_PASS antes de utilizar o banco remoto.');
+}
 
 // Log para debug
 error_log('[imobsites] FORÇANDO uso do banco REMOTO - Host: ' . DB_HOST . ' - Database: ' . DB_NAME);
@@ -33,7 +37,7 @@ try {
          <strong>Verifique:</strong><br>
          - Se o host <strong>" . DB_HOST . "</strong> está correto<br>
          - Se as credenciais estão corretas<br>
-         - Se há restrições de IP no Hostinger<br>
+         - Se o servidor permite conexões remotas<br>
          - Se o servidor MySQL está rodando<br>
          <br>
          <a href='test_banco_remoto.php'>🧪 Testar Conexão</a>");

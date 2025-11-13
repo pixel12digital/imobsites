@@ -35,6 +35,15 @@ try {
     $total_vendidos = 0;
     $total_alugados = 0;
 }
+
+$phoneVendaDigits = PHONE_VENDA ? preg_replace('/\D+/', '', PHONE_VENDA) : '';
+$phoneLocacaoDigits = PHONE_LOCACAO ? preg_replace('/\D+/', '', PHONE_LOCACAO) : '';
+$whatsappVenda = PHONE_WHATSAPP_VENDA ?: '';
+$whatsappLocacao = PHONE_WHATSAPP_LOCACAO ?: '';
+$phoneVendaDisplay = PHONE_VENDA ? htmlspecialchars(PHONE_VENDA, ENT_QUOTES, 'UTF-8') : '';
+$phoneLocacaoDisplay = PHONE_LOCACAO ? htmlspecialchars(PHONE_LOCACAO, ENT_QUOTES, 'UTF-8') : '';
+$siteEmailDisplay = SITE_EMAIL ? htmlspecialchars(SITE_EMAIL, ENT_QUOTES, 'UTF-8') : '';
+$siteNameDisplay = SITE_NAME ? htmlspecialchars(SITE_NAME, ENT_QUOTES, 'UTF-8') : 'Nome da Imobiliária';
 ?>
 
 <!-- Hero Section -->
@@ -66,23 +75,32 @@ try {
                                 <h3 id="vendas-title" class="card-title text-success mb-2 h6">
                                     <i class="fas fa-star me-1" aria-hidden="true"></i>Vendas
                                 </h3>
-                                <p class="card-text mb-2">
-                                    <a href="tel:<?php echo str_replace(['+', ' ', '-'], '', PHONE_VENDA); ?>" 
-                                       class="btn btn-success btn-sm"
-                                       aria-label="Ligar para vendas: <?php echo PHONE_VENDA; ?>"
-                                       title="Ligar para vendas">
-                                        <i class="fas fa-phone me-1" aria-hidden="true"></i><?php echo PHONE_VENDA; ?>
-                                    </a>
-                                </p>
-                                <p class="card-text mb-2">
-                                    <a href="https://wa.me/<?php echo PHONE_WHATSAPP_VENDA; ?>?text=Olá! Gostaria de saber mais sobre imóveis para compra." 
-                                       target="_blank" 
-                                       class="btn btn-outline-success btn-sm"
-                                       aria-label="Abrir WhatsApp para vendas. Número: <?php echo PHONE_VENDA; ?>"
-                                       title="WhatsApp Vendas">
-                                        <i class="fab fa-whatsapp me-1" aria-hidden="true"></i>WhatsApp Vendas
-                                    </a>
-                                </p>
+                                <?php if (!empty($phoneVendaDigits)): ?>
+                                    <p class="card-text mb-2">
+                                        <a href="tel:<?php echo $phoneVendaDigits; ?>" 
+                                           class="btn btn-success btn-sm"
+                                           aria-label="Ligar para vendas: <?php echo $phoneVendaDisplay; ?>"
+                                           title="Ligar para vendas">
+                                            <i class="fas fa-phone me-1" aria-hidden="true"></i><?php echo $phoneVendaDisplay; ?>
+                                        </a>
+                                    </p>
+                                <?php else: ?>
+                                    <p class="card-text mb-2 text-muted">Defina um telefone de vendas para habilitar este botão.</p>
+                                <?php endif; ?>
+
+                                <?php if (!empty($whatsappVenda)): ?>
+                                    <p class="card-text mb-2">
+                                        <a href="https://wa.me/<?php echo $whatsappVenda; ?>?text=Olá! Gostaria de saber mais sobre imóveis para compra." 
+                                           target="_blank" 
+                                           class="btn btn-outline-success btn-sm"
+                                           aria-label="Abrir WhatsApp para vendas. Número: <?php echo $phoneVendaDisplay ?: 'Configurar número'; ?>"
+                                           title="WhatsApp Vendas">
+                                            <i class="fab fa-whatsapp me-1" aria-hidden="true"></i>WhatsApp Vendas
+                                        </a>
+                                    </p>
+                                <?php else: ?>
+                                    <p class="card-text mb-2 text-muted">Informe um número de WhatsApp de vendas para exibir aqui.</p>
+                                <?php endif; ?>
                                 <small class="text-muted">Compra e venda de imóveis</small>
                             </div>
                         </div>
@@ -98,23 +116,31 @@ try {
                                 <h3 id="locacao-title" class="card-title text-info mb-2 h6">
                                     <i class="fas fa-star me-1" aria-hidden="true"></i>Locação
                                 </h3>
-                                <p class="card-text mb-2">
-                                    <a href="tel:<?php echo str_replace(['+', ' ', '-'], '', PHONE_LOCACAO); ?>" 
-                                       class="btn btn-info btn-sm"
-                                       aria-label="Ligar para locação: <?php echo PHONE_LOCACAO; ?>"
-                                       title="Ligar para locação">
-                                        <i class="fas fa-phone me-1" aria-hidden="true"></i><?php echo PHONE_LOCACAO; ?>
-                                    </a>
-                                </p>
-                                <p class="card-text mb-2">
-                                    <a href="https://wa.me/<?php echo PHONE_WHATSAPP_LOCACAO; ?>?text=Olá! Gostaria de saber mais sobre imóveis para aluguel." 
-                                       target="_blank" 
-                                       class="btn btn-outline-info btn-sm"
-                                       aria-label="Abrir WhatsApp para locação. Número: <?php echo PHONE_LOCACAO; ?>"
-                                       title="WhatsApp Locação">
-                                        <i class="fab fa-whatsapp me-1" aria-hidden="true"></i>WhatsApp Locação
-                                    </a>
-                                </p>
+                                <?php if (!empty($phoneLocacaoDigits)): ?>
+                                    <p class="card-text mb-2">
+                                        <a href="tel:<?php echo $phoneLocacaoDigits; ?>" 
+                                           class="btn btn-info btn-sm"
+                                           aria-label="Ligar para locação: <?php echo $phoneLocacaoDisplay; ?>"
+                                           title="Ligar para locação">
+                                            <i class="fas fa-phone me-1" aria-hidden="true"></i><?php echo $phoneLocacaoDisplay; ?>
+                                        </a>
+                                    </p>
+                                <?php else: ?>
+                                    <p class="card-text mb-2 text-muted">Defina um telefone de locação para habilitar este botão.</p>
+                                <?php endif; ?>
+                                <?php if (!empty($whatsappLocacao)): ?>
+                                    <p class="card-text mb-2">
+                                        <a href="https://wa.me/<?php echo $whatsappLocacao; ?>?text=Olá! Gostaria de saber mais sobre imóveis para aluguel." 
+                                           target="_blank" 
+                                           class="btn btn-outline-info btn-sm"
+                                           aria-label="Abrir WhatsApp para locação. Número: <?php echo $phoneLocacaoDisplay ?: 'Configurar número'; ?>"
+                                           title="WhatsApp Locação">
+                                            <i class="fab fa-whatsapp me-1" aria-hidden="true"></i>WhatsApp Locação
+                                        </a>
+                                    </p>
+                                <?php else: ?>
+                                    <p class="card-text mb-2 text-muted">Informe um número de WhatsApp de locação para exibir aqui.</p>
+                                <?php endif; ?>
                                 <small class="text-muted">Aluguel de imóveis</small>
                             </div>
                         </div>
@@ -136,10 +162,9 @@ try {
                         <div class="contact-icon mb-3">
                             <i class="fas fa-building fa-3x text-primary"></i>
                         </div>
-                        <h5 class="card-title"><?php echo SITE_NAME; ?></h5>
+                        <h5 class="card-title"><?php echo $siteNameDisplay; ?></h5>
                         <p class="card-text text-muted">
-                            Realizamos sonhos com paixão, dedicação e recursos para ajudar nossos clientes 
-                            a atingir seus objetivos de compra e venda.
+                            Personalize este texto para apresentar rapidamente os serviços e diferenciais da sua imobiliária.
                         </p>
                         
                         <!-- Estatísticas -->
@@ -183,11 +208,15 @@ try {
                                 </div>
                                 <div>
                                     <h6 class="mb-1">Telefone Geral</h6>
-                                                            <p class="mb-0">
-                            <a href="tel:<?php echo PHONE_VENDA; ?>" class="text-decoration-none">
-                                <?php echo PHONE_VENDA; ?>
-                            </a>
-                        </p>
+                                    <?php if (!empty($phoneVendaDigits)): ?>
+                                        <p class="mb-0">
+                                            <a href="tel:<?php echo $phoneVendaDigits; ?>" class="text-decoration-none">
+                                                <?php echo $phoneVendaDisplay; ?>
+                                            </a>
+                                        </p>
+                                    <?php else: ?>
+                                        <p class="mb-0 text-muted">Defina o telefone principal para exibir aqui.</p>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
@@ -202,15 +231,19 @@ try {
                                     <h6 id="vendas-detail-title" class="mb-1 text-success">
                                         <i class="fas fa-star me-1" aria-hidden="true"></i>Vendas
                                     </h6>
-                                    <p class="mb-0">
-                                        <a href="tel:<?php echo PHONE_VENDA; ?>" 
-                                           class="text-decoration-none fw-bold"
-                                           aria-label="Ligar para vendas: <?php echo PHONE_VENDA; ?>"
-                                           title="Ligar para vendas">
-                                            <?php echo PHONE_VENDA; ?>
-                                        </a>
-                                    </p>
-                                    <small class="text-muted">Compra e venda de imóveis</small>
+                                    <?php if (!empty($phoneVendaDigits)): ?>
+                                        <p class="mb-0">
+                                            <a href="tel:<?php echo $phoneVendaDigits; ?>" 
+                                               class="text-decoration-none fw-bold"
+                                               aria-label="Ligar para vendas: <?php echo $phoneVendaDisplay; ?>"
+                                               title="Ligar para vendas">
+                                                <?php echo $phoneVendaDisplay; ?>
+                                            </a>
+                                        </p>
+                                        <small class="text-muted">Compra e venda de imóveis</small>
+                                    <?php else: ?>
+                                        <p class="mb-0 text-muted">Adicione o telefone de vendas nas configurações.</p>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
@@ -225,15 +258,19 @@ try {
                                     <h6 id="locacao-detail-title" class="mb-1 text-info">
                                         <i class="fas fa-star me-1" aria-hidden="true"></i>Locação
                                     </h6>
-                                    <p class="mb-0">
-                                        <a href="tel:<?php echo PHONE_LOCACAO; ?>" 
-                                           class="text-decoration-none fw-bold"
-                                           aria-label="Ligar para locação: <?php echo PHONE_LOCACAO; ?>"
-                                           title="Ligar para locação">
-                                            <?php echo PHONE_LOCACAO; ?>
-                                        </a>
-                                    </p>
-                                    <small class="text-muted">Aluguel de imóveis</small>
+                                    <?php if (!empty($phoneLocacaoDigits)): ?>
+                                        <p class="mb-0">
+                                            <a href="tel:<?php echo $phoneLocacaoDigits; ?>" 
+                                               class="text-decoration-none fw-bold"
+                                               aria-label="Ligar para locação: <?php echo $phoneLocacaoDisplay; ?>"
+                                               title="Ligar para locação">
+                                                <?php echo $phoneLocacaoDisplay; ?>
+                                            </a>
+                                        </p>
+                                        <small class="text-muted">Aluguel de imóveis</small>
+                                    <?php else: ?>
+                                        <p class="mb-0 text-muted">Adicione o telefone de locação nas configurações.</p>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
@@ -245,11 +282,15 @@ try {
                                 </div>
                                 <div>
                                     <h6 class="mb-1">E-mail</h6>
-                                    <p class="mb-0">
-                                        <a href="mailto:<?php echo SITE_EMAIL; ?>" class="text-decoration-none">
-                                            <?php echo SITE_EMAIL; ?>
-                                        </a>
-                                    </p>
+                                    <?php if (!empty(SITE_EMAIL)): ?>
+                                        <p class="mb-0">
+                                            <a href="mailto:<?php echo SITE_EMAIL; ?>" class="text-decoration-none">
+                                                <?php echo $siteEmailDisplay; ?>
+                                            </a>
+                                        </p>
+                                    <?php else: ?>
+                                        <p class="mb-0 text-muted">Informe o e-mail de contato nas configurações.</p>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
@@ -298,18 +339,26 @@ try {
                             <h6 class="mb-3">Atendimento via WhatsApp</h6>
                             
                             <div class="mb-3">
-                                <a href="https://wa.me/<?php echo PHONE_WHATSAPP_VENDA; ?>?text=Olá! Gostaria de saber mais sobre imóveis para compra." 
-                                   target="_blank" class="btn btn-success btn-sm w-100 mb-2">
-                                    <i class="fab fa-whatsapp me-2"></i>Vendas
-                                </a>
-                                <a href="https://wa.me/<?php echo PHONE_WHATSAPP_LOCACAO; ?>?text=Olá! Gostaria de saber mais sobre imóveis para aluguel." 
-                                   target="_blank" class="btn btn-info btn-sm w-100">
-                                    <i class="fab fa-whatsapp me-2"></i>Locação
-                                </a>
+                                <?php if (!empty($whatsappVenda)): ?>
+                                    <a href="https://wa.me/<?php echo $whatsappVenda; ?>?text=Olá! Gostaria de saber mais sobre imóveis para compra." 
+                                       target="_blank" class="btn btn-success btn-sm w-100 mb-2">
+                                        <i class="fab fa-whatsapp me-2"></i>Vendas
+                                    </a>
+                                <?php else: ?>
+                                    <span class="btn btn-outline-secondary btn-sm w-100 mb-2 disabled">Configurar WhatsApp de vendas</span>
+                                <?php endif; ?>
+                                <?php if (!empty($whatsappLocacao)): ?>
+                                    <a href="https://wa.me/<?php echo $whatsappLocacao; ?>?text=Olá! Gostaria de saber mais sobre imóveis para aluguel." 
+                                       target="_blank" class="btn btn-info btn-sm w-100">
+                                        <i class="fab fa-whatsapp me-2"></i>Locação
+                                    </a>
+                                <?php else: ?>
+                                    <span class="btn btn-outline-secondary btn-sm w-100 disabled">Configurar WhatsApp de locação</span>
+                                <?php endif; ?>
                             </div>
                             
                             <small class="text-muted d-block mt-2">
-                                Resposta em até 5 minutos
+                                Ajuste os números de WhatsApp para personalizar o atendimento.
                             </small>
                         </div>
                     </div>
@@ -389,7 +438,7 @@ try {
                                     </label>
                                                                         <input type="tel" class="form-control" id="telefone" name="telefone" 
                                            value="<?php echo isset($telefone) ? htmlspecialchars($telefone) : ''; ?>" 
-                                           placeholder="(12) 98863-2149">
+                                           placeholder="(00) 00000-0000">
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label for="assunto" class="form-label">
@@ -492,14 +541,13 @@ try {
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="faq3">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3">
-                                Vocês atendem outras cidades além de São Paulo?
+                                Vocês atendem outras regiões além da principal área de atuação?
                             </button>
                         </h2>
                         <div id="collapse3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                             <div class="accordion-body">
-                                Sim! Atendemos toda a Grande São Paulo e região metropolitana, incluindo Campinas, 
-                                Santos e outras cidades próximas. Entre em contato para verificar disponibilidade 
-                                na sua região.
+                                Personalize esta resposta com as regiões, cidades ou estados onde sua imobiliária atua. 
+                                Aproveite para orientar o cliente sobre como checar disponibilidade de atendimento.
                             </div>
                         </div>
                     </div>
@@ -527,20 +575,29 @@ try {
 <!-- CTA Final -->
 <section class="cta-section py-5 bg-primary text-white">
     <div class="container text-center">
-        <h3 class="mb-3">Pronto para encontrar seu imóvel ideal?</h3>
-        <p class="lead mb-4">Nossa equipe está pronta para ajudar você a realizar o sonho da casa própria!</p>
+        <h3 class="mb-3">Personalize o chamado para ação final</h3>
+        <p class="lead mb-4">Adicione um convite direto para que visitantes conversem com a sua equipe ou façam um cadastro.</p>
         <div class="d-flex justify-content-center gap-3 flex-wrap">
             <a href="<?php echo getPagePath('imoveis'); ?>" class="btn btn-light btn-lg">
                 <i class="fas fa-search me-2"></i>Ver Imóveis
             </a>
-            <a href="https://wa.me/<?php echo PHONE_WHATSAPP_VENDA; ?>?text=Olá! Gostaria de agendar uma visita para compra." 
-               target="_blank" class="btn btn-success btn-lg">
-                <i class="fab fa-whatsapp me-2"></i>Agendar Visita - Vendas
-            </a>
-            <a href="https://wa.me/<?php echo PHONE_WHATSAPP_LOCACAO; ?>?text=Olá! Gostaria de agendar uma visita para locação." 
-               target="_blank" class="btn btn-info btn-lg">
-                <i class="fab fa-whatsapp me-2"></i>Agendar Visita - Locação
-            </a>
+            <?php if (!empty($whatsappVenda)): ?>
+                <a href="https://wa.me/<?php echo $whatsappVenda; ?>?text=Olá! Gostaria de agendar uma visita para compra." 
+                   target="_blank" class="btn btn-success btn-lg">
+                    <i class="fab fa-whatsapp me-2"></i>Agendar Visita - Vendas
+                </a>
+            <?php endif; ?>
+            <?php if (!empty($whatsappLocacao)): ?>
+                <a href="https://wa.me/<?php echo $whatsappLocacao; ?>?text=Olá! Gostaria de agendar uma visita para locação." 
+                   target="_blank" class="btn btn-info btn-lg">
+                    <i class="fab fa-whatsapp me-2"></i>Agendar Visita - Locação
+                </a>
+            <?php endif; ?>
+            <?php if (empty($whatsappVenda) && empty($whatsappLocacao)): ?>
+                <span class="text-white-50 d-inline-flex align-items-center">
+                    <i class="fab fa-whatsapp me-2"></i>Configure os números de WhatsApp para mostrar os botões de contato rápido.
+                </span>
+            <?php endif; ?>
         </div>
     </div>
 </section>
@@ -616,9 +673,9 @@ document.getElementById('contact-form').addEventListener('submit', function(e) {
 
 // Função para mostrar notificações
 function showNotification(message, type = 'info') {
-    // Verificar se existe a função JTRImoveis
-    if (typeof JTRImoveis !== 'undefined' && JTRImoveis.showNotification) {
-        JTRImoveis.showNotification(message, type);
+    // Verificar se existe a função global TemplateSite
+    if (typeof TemplateSite !== 'undefined' && TemplateSite.showNotification) {
+        TemplateSite.showNotification(message, type);
     } else {
         // Fallback para notificação simples
         const alertClass = type === 'success' ? 'alert-success' : 

@@ -9,15 +9,20 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Configurações gerais do sistema
-define('SITE_NAME', tenantSetting('site_name', 'imobsites'));
+define('SITE_NAME', tenantSetting('site_name', ''));
 define('SITE_URL', ''); // Será detectado automaticamente
-define('SITE_EMAIL', tenantSetting('site_email', 'contato@jtrimoveis.com.br'));
+define('SITE_EMAIL', tenantSetting('site_email', ''));
+
+define('SITE_TAGLINE', tenantSetting('site_tagline', 'Personalize o slogan da sua imobiliária.'));
+define('SITE_META_DESCRIPTION', tenantSetting('meta_description', 'Configure a descrição do seu portal imobiliário.'));
+define('SITE_META_KEYWORDS', tenantSetting('meta_keywords', ''));
+define('SITE_META_AUTHOR', tenantSetting('meta_author', SITE_NAME ?: ''));
 
 // Números de telefone específicos por tipo de operação
-define('PHONE_VENDA', tenantSetting('phone_venda', '+55 12 98863-2149'));
-define('PHONE_LOCACAO', tenantSetting('phone_locacao', '+55 12 99126-7831'));
-define('PHONE_WHATSAPP_VENDA', tenantSetting('whatsapp_venda', '5512988632149'));
-define('PHONE_WHATSAPP_LOCACAO', tenantSetting('whatsapp_locacao', '5512991267831'));
+define('PHONE_VENDA', tenantSetting('phone_venda', ''));
+define('PHONE_LOCACAO', tenantSetting('phone_locacao', ''));
+define('PHONE_WHATSAPP_VENDA', tenantSetting('whatsapp_venda', ''));
+define('PHONE_WHATSAPP_LOCACAO', tenantSetting('whatsapp_locacao', ''));
 
 // Configurações de upload
 define('UPLOAD_DIR', dirname(__DIR__) . '/uploads/');
@@ -40,12 +45,14 @@ function getAllowedExtensions() {
 define('ITEMS_PER_PAGE', 12);
 
 // Função para limpar input
-function cleanInput($data) {
-    $data = trim($data);
-    $data = stripslashes($data);
-    // Usar ENT_QUOTES para codificar aspas corretamente
-    $data = htmlspecialchars($data, ENT_QUOTES, 'UTF-8');
-    return $data;
+if (!function_exists('cleanInput')) {
+    function cleanInput($data) {
+        $data = trim($data);
+        $data = stripslashes($data);
+        // Usar ENT_QUOTES para codificar aspas corretamente
+        $data = htmlspecialchars($data, ENT_QUOTES, 'UTF-8');
+        return $data;
+    }
 }
 
 // Função para formatar preço
@@ -77,33 +84,25 @@ function generateSlug($string) {
 }
 
 // ============================================================================
-// CONFIGURAÇÃO DE IMAGENS - HOSTINGER
+// CONFIGURAÇÃO DE IMAGENS REMOTAS
 // ============================================================================
 
-// URL base das imagens na Hostinger
-define('HOSTINGER_IMAGES_URL', 'https://imoveisjtr.com.br/uploads');
+define('REMOTE_UPLOADS_BASE_URL', rtrim(tenantSetting('uploads_base_url', ''), '/'));
 
-// Função para obter URL da imagem na Hostinger
-function getHostingerImageUrl($image_path) {
+function getRemoteUploadUrl($image_path) {
+    if (empty(REMOTE_UPLOADS_BASE_URL)) {
+        return null;
+    }
+
     // Se o caminho já é uma URL completa, retornar como está
     if (filter_var($image_path, FILTER_VALIDATE_URL)) {
         return $image_path;
     }
     
-    // SEMPRE usar URL da Hostinger (tanto local quanto produção)
-    // Não queremos baixar pastas localmente
-    if (strpos($image_path, '/') === false) {
-        // Se é apenas o nome do arquivo, construir URL completa da Hostinger
-        return HOSTINGER_IMAGES_URL . '/imoveis/6/' . $image_path;
-    }
-    
-    // Se já tem caminho, usar como está
-    $clean_path = preg_replace('/^uploads\//', '', $image_path);
-    return HOSTINGER_IMAGES_URL . '/' . $clean_path;
+    $clean_path = ltrim(str_replace('\\', '/', preg_replace('/^uploads\//', '', $image_path)), '/');
+    return REMOTE_UPLOADS_BASE_URL . '/' . $clean_path;
 }
 
-// Função para verificar se deve usar Hostinger ou local
-function shouldUseHostingerImages() {
-    // Sempre usar Hostinger para imagens (banco remoto)
-    return true;
+function shouldUseRemoteUploads() {
+    return !empty(REMOTE_UPLOADS_BASE_URL);
 }

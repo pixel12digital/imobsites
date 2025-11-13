@@ -3,7 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo SITE_NAME; ?> - Realizando Sonhos</title>
+    <?php
+        $pageTitle = SITE_NAME ?: 'Nome da Imobiliária';
+        if (!empty(SITE_TAGLINE)) {
+            $pageTitle .= ' - ' . SITE_TAGLINE;
+        }
+
+        $metaDescription = SITE_META_DESCRIPTION ?: 'Adicione a descrição da sua imobiliária.';
+        $metaKeywords = SITE_META_KEYWORDS ?: 'imobiliária, imóveis, personalize';
+        $metaAuthor = SITE_META_AUTHOR ?: (SITE_NAME ?: 'Imobiliária');
+        $highlightPhone = PHONE_VENDA ?: 'Configure o telefone principal da imobiliária';
+    ?>
+    <title><?php echo htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8'); ?></title>
     
     <!-- CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -11,13 +22,13 @@
     <link href="<?php echo getAssetPath('css/style.css'); ?>" rel="stylesheet">
     
     <!-- Meta tags SEO -->
-    <meta name="description" content="imobsites - Encontre seu lar dos sonhos. Imóveis em São Paulo e região com as melhores condições.">
-    <meta name="keywords" content="imóveis, casas, apartamentos, São Paulo, compra, venda, aluguel">
-    <meta name="author" content="imobsites">
+    <meta name="description" content="<?php echo htmlspecialchars($metaDescription, ENT_QUOTES, 'UTF-8'); ?>">
+    <meta name="keywords" content="<?php echo htmlspecialchars($metaKeywords, ENT_QUOTES, 'UTF-8'); ?>">
+    <meta name="author" content="<?php echo htmlspecialchars($metaAuthor, ENT_QUOTES, 'UTF-8'); ?>">
     
     <!-- Open Graph -->
-    <meta property="og:title" content="<?php echo SITE_NAME; ?>">
-    <meta property="og:description" content="Encontre seu lar dos sonhos com a imobsites">
+    <meta property="og:title" content="<?php echo htmlspecialchars(SITE_NAME, ENT_QUOTES, 'UTF-8'); ?>">
+    <meta property="og:description" content="<?php echo htmlspecialchars($metaDescription, ENT_QUOTES, 'UTF-8'); ?>">
     <meta property="og:type" content="website">
     <meta property="og:url" content="<?php echo getBaseUrl(); ?>">
 </head>
@@ -30,7 +41,7 @@
                 <div class="d-flex align-items-center justify-content-between">
                     <div class="d-flex align-items-center">
                         <i class="fas fa-phone me-2"></i>
-                        <span><?php echo PHONE_VENDA; ?></span>
+                        <span><?php echo htmlspecialchars($highlightPhone, ENT_QUOTES, 'UTF-8'); ?></span>
                     </div>
                     <div class="social-links">
                         <a href="#" class="text-white me-3"><i class="fab fa-facebook-f"></i></a>
@@ -47,7 +58,7 @@
                 <div class="row align-items-center w-100">
                     <div class="col-lg-6 col-md-6 col-6">
                         <a class="navbar-brand" href="<?php echo getPagePath('home'); ?>">
-                            <img src="<?php echo getAssetPath('logo-imob.png'); ?>" alt="Imobsites" class="logo-img">
+                            <img src="<?php echo getAssetPath('logo-imob.png'); ?>" alt="<?php echo htmlspecialchars(SITE_NAME ?: 'Logo da Imobiliária', ENT_QUOTES, 'UTF-8'); ?>" class="logo-img">
                         </a>
                     </div>
                     

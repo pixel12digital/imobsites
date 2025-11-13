@@ -162,15 +162,14 @@ function getUploadPath($filename) {
         return false;
     }
     
-    // Verificar se deve usar Hostinger
-    if (function_exists('shouldUseHostingerImages') && shouldUseHostingerImages()) {
-        // Usar URL da Hostinger
-        if (function_exists('getHostingerImageUrl')) {
-            return getHostingerImageUrl($filename);
+    // Verificar se deve usar uploads remotos
+    if (function_exists('shouldUseRemoteUploads') && shouldUseRemoteUploads()) {
+        if (function_exists('getRemoteUploadUrl')) {
+            return getRemoteUploadUrl($filename);
         }
     }
     
-    // Fallback para verificação local (apenas se não estiver usando Hostinger)
+    // Fallback para verificação local
     // Verificar se estamos em ambiente web (não CLI)
     if (php_sapi_name() !== 'cli' && isset($_SERVER['HTTP_HOST'])) {
         $absolutePath = getAbsolutePath('uploads/' . ltrim($filename, '/'));
@@ -188,9 +187,8 @@ function imageExists($filename) {
         return false;
     }
     
-    // Se estiver usando Hostinger, considerar que a imagem existe
-    // (não podemos verificar fisicamente, mas assumir que está lá)
-    if (function_exists('shouldUseHostingerImages') && shouldUseHostingerImages()) {
+    // Se estiver usando uploads remotos, considerar que a imagem existe
+    if (function_exists('shouldUseRemoteUploads') && shouldUseRemoteUploads()) {
         return true;
     }
     

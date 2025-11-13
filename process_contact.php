@@ -68,7 +68,7 @@ function obterTelefoneOperacao($tipo_operacao) {
         case 'locacao':
             return PHONE_LOCACAO;
         default:
-            return PHONE_VENDA; // Usar número de vendas como padrão
+            return PHONE_VENDA;
     }
 }
 
@@ -80,7 +80,7 @@ function obterWhatsAppOperacao($tipo_operacao) {
         case 'locacao':
             return PHONE_WHATSAPP_LOCACAO;
         default:
-            return '5511999999999'; // WhatsApp padrão
+            return PHONE_WHATSAPP_VENDA;
     }
 }
 
@@ -108,11 +108,12 @@ function enviarEmailNotificacao($nome, $email, $telefone, $assunto, $mensagem, $
     
     $para = SITE_EMAIL;
     $assunto_email = "Novo contato via site - " . ucfirst($tipo_operacao);
+    $siteTitle = SITE_NAME ?: 'Portal Imobiliário';
     
     $corpo = "
     <html>
     <head>
-        <title>Novo Contato - imobsites</title>
+        <title>Novo contato - {$siteTitle}</title>
     </head>
     <body>
         <h2>Novo contato recebido via site</h2>
@@ -124,7 +125,7 @@ function enviarEmailNotificacao($nome, $email, $telefone, $assunto, $mensagem, $
         <p><strong>Mensagem:</strong></p>
         <p>{$mensagem}</p>
         <hr>
-        <p><strong>Contato específico para {$tipo_operacao}:</strong> {$telefone_operacao}</p>
+        <p><strong>Contato específico para {$tipo_operacao}:</strong> " . ($telefone_operacao ?: 'Configure o telefone correspondente no painel.') . "</p>
         <p><em>Este e-mail foi enviado automaticamente pelo sistema de contatos do site.</em></p>
     </body>
     </html>
@@ -132,9 +133,17 @@ function enviarEmailNotificacao($nome, $email, $telefone, $assunto, $mensagem, $
     
     $headers = "MIME-Version: 1.0\r\n";
     $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-    $headers .= "From: " . SITE_EMAIL . "\r\n";
-    $headers .= "Reply-To: {$email}\r\n";
+    $fromEmail = SITE_EMAIL ?: 'no-reply@example.com';
+    $headers .= "From: {$fromEmail}\r\n";
+    if (!empty($email)) {
+        $headers .= "Reply-To: {$email}\r\n";
+    }
     
+    if (empty($para)) {
+        error_log('E-mail de destino não configurado para notificações de contato.');
+        return true;
+    }
+
     return mail($para, $assunto_email, $corpo, $headers);
 }
 

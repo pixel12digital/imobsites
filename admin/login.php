@@ -20,17 +20,42 @@ if (session_status() === PHP_SESSION_NONE) {
 
 if (isset($_GET['tenant'])) {
     $tenant_slug = cleanInput($_GET['tenant']);
-    $tenant = fetch("SELECT id, name FROM tenants WHERE slug = ?", [$tenant_slug]);
+    $tenant = fetch("SELECT id, name, slug FROM tenants WHERE slug = ?", [$tenant_slug]);
     if ($tenant) {
         $_SESSION['tenant_override_id'] = (int)$tenant['id'];
-        $_SESSION['tenant_override_notice'] = 'Impersonando tenant: ' . $tenant['name'];
+        $_SESSION['tenant_override_notice'] = 'Acessando como cliente: ' . $tenant['name'];
+        if ($tenant['slug'] === 'tenant-padrao') {
+            $_SESSION['tenant_override_logo'] = '../assets/logo-fundo-braco.png';
+        } else {
+            unset($_SESSION['tenant_override_logo']);
+        }
+
+        // Guardar rota de retorno para o painel master, caso o acesso tenha partido dele
+        if (empty($_SESSION['tenant_override_return_url'])) {
+            $_SESSION['tenant_override_return_url'] = '../master/index.php';
+        }
     } else {
         $_SESSION['tenant_override_notice'] = 'Tenant não encontrado para o slug informado.';
     }
 }
 
 if (isset($_GET['clear_tenant'])) {
-    unset($_SESSION['tenant_override_id'], $_SESSION['tenant_override_notice']);
+    $returnUrl = $_SESSION['tenant_override_return_url'] ?? '../master/index.php';
+
+    unset(
+        $_SESSION['tenant_override_id'],
+        $_SESSION['tenant_override_notice'],
+        $_SESSION['tenant_override_logo'],
+        $_SESSION['tenant_override_return_url']
+    );
+
+    // Garantir que o redirecionamento permaneça interno
+    if (preg_match('#^https?://#i', $returnUrl)) {
+        $returnUrl = '../master/index.php';
+    }
+
+    header('Location: ' . $returnUrl);
+    exit;
 }
 
 require_once '../config/tenant.php';
@@ -117,47 +142,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         .login-left {
-            background: linear-gradient(135deg, #1C3B5A 0%, #1E232B 100%);
+            background: #1b2f4b;
             position: relative;
             overflow: hidden;
-        }
-        
-        .login-left::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.1)"/><circle cx="10" cy="60" r="0.5" fill="rgba(255,255,255,0.1)"/><circle cx="90" cy="40" r="0.5" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-            opacity: 0.3;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 4rem 2.5rem 3rem;
         }
         
         .login-brand {
             position: relative;
             z-index: 2;
-            text-align: center;
-            padding: 3rem 2rem;
             color: white;
+            width: 100%;
+            max-width: 420px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 0.85rem;
         }
         
-        .login-brand img {
-            height: 54px;
+        .login-brand__logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .login-brand__logo img {
+            height: 110px;
             width: auto;
-            margin-bottom: 1.5rem;
         }
         
+        .login-brand__text {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            margin-top: 0;
+        }
+
         .login-brand h1 {
-            font-size: 2.2rem;
+            font-size: 2.8rem;
             font-weight: 700;
-            margin-bottom: 0.75rem;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.25);
+            margin: 0.15rem 0 0.2rem;
         }
         
         .login-brand p {
-            font-size: 1.1rem;
-            opacity: 0.9;
-            margin-bottom: 0;
+            font-size: 1.15rem;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.9);
+            margin: 0;
         }
         
         .login-form {
@@ -268,8 +304,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 padding: 2rem 1.5rem;
             }
             
+            .login-brand {
+                padding: 2.75rem 2rem 2.5rem;
+                align-items: center;
+                text-align: center;
+                gap: 0.9rem;
+            }
+            
+            .login-brand__logo {
+                margin-bottom: 0;
+            }
+            
+            .login-brand__logo img {
+                height: 80px;
+            }
+            
             .login-brand h1 {
-                font-size: 2rem;
+                font-size: 2.2rem;
+                margin: 0.1rem 0 0.2rem;
+            }
+            
+            .login-brand p {
+                font-size: 1rem;
+                margin: 0;
+            }
+        }
+
+        @media (min-width: 992px) {
+            .login-brand__text {
+                margin-top: 2.5rem;
             }
         }
     </style>
@@ -279,13 +342,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-xl-10 col-lg-12 col-md-9">
-                    <div class="card login-card">
+                                        <div class="card login-card">
                         <div class="row g-0">
                             <div class="col-lg-6 login-left">
                                 <div class="login-brand">
-                                    <img src="../assets/logo-imob.png" alt="Imobsites">
-                                    <h1>Painel Imobsites</h1>
-                                    <p>Administre seus imóveis com eficiência</p>
+                                    <div class="login-brand__logo">
+                                        <?php if (!empty($_SESSION['tenant_override_logo'])): ?>
+                                            <img src="<?php echo htmlspecialchars($_SESSION['tenant_override_logo']); ?>" alt="Imobsites">
+                                        <?php else: ?>
+                                            <img src="../assets/logo-imob.png" alt="Imobsites">
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="login-brand__text">
+                                        <h1>Painel Imobsites</h1>
+                                        <p>Administre seus imóveis com eficiência</p>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-lg-6">
@@ -299,7 +370,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="alert alert-info alert-dismissible fade show" role="alert">
                         <i class="fas fa-user-secret me-2"></i>
                         <?php echo htmlspecialchars($impersonate_notice); ?>
-                        <a href="login.php?clear_tenant=1" class="btn btn-sm btn-outline-light ms-3">Encerrar impersonação</a>
+                        <a href="login.php?clear_tenant=1" class="btn btn-sm btn-outline-light ms-3">Voltar para modo administrador</a>
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 <?php unset($_SESSION['tenant_override_notice']); endif; ?>

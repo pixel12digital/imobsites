@@ -280,12 +280,12 @@ function saveFavorites() {
     const favorites = Array.from(document.querySelectorAll('.favorite-btn.favorited'))
         .map(btn => btn.dataset.propertyId);
     
-    localStorage.setItem('jtr_favorites', JSON.stringify(favorites));
+    localStorage.setItem('template_favorites', JSON.stringify(favorites));
 }
 
 // Carregar favoritos do localStorage
 function loadFavorites() {
-    const favorites = JSON.parse(localStorage.getItem('jtr_favorites') || '[]');
+    const favorites = JSON.parse(localStorage.getItem('template_favorites') || '[]');
     
     favorites.forEach(propertyId => {
         const btn = document.querySelector(`[data-property-id="${propertyId}"]`);
@@ -321,6 +321,22 @@ function shareProperty(propertyId, platform) {
     }
     
     window.open(shareUrl, '_blank', 'width=600,height=400');
+}
+
+function openWhatsApp(phoneDigits, contactName = '') {
+    const cleanPhone = (phoneDigits || '').toString().replace(/\D/g, '');
+
+    if (!cleanPhone) {
+        showNotification('Configure um número de WhatsApp para ativar este recurso.', 'warning');
+        return;
+    }
+
+    const defaultMessage = contactName
+        ? `Olá! Gostaria de falar com ${contactName}.`
+        : 'Olá! Gostaria de falar com a equipe de atendimento.';
+
+    const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(defaultMessage)}`;
+    window.open(url, '_blank');
 }
 
 // Inicializar quando a página carregar
@@ -508,7 +524,7 @@ function salvarFiltrosHome() {
         }
     });
     
-    localStorage.setItem('jtr_filtros_home', JSON.stringify(filtros));
+    localStorage.setItem('template_filtros_home', JSON.stringify(filtros));
     showNotification('Filtros salvos com sucesso', 'success');
 }
 
@@ -517,7 +533,7 @@ function carregarFiltrosHome() {
     const form = document.getElementById('quickSearchForm');
     if (!form) return;
     
-    const filtros = JSON.parse(localStorage.getItem('jtr_filtros_home') || '{}');
+    const filtros = JSON.parse(localStorage.getItem('template_filtros_home') || '{}');
     
     Object.entries(filtros).forEach(([campo, valor]) => {
         const elemento = form.querySelector(`[name="${campo}"]`);
@@ -559,11 +575,12 @@ function initHomeFilters() {
 }
 
 // Exportar funções para uso global
-window.JTRImoveis = {
+window.TemplateSite = {
     showNotification,
     formatPrice,
     toggleFavorite,
     shareProperty,
+    openWhatsApp,
     searchProperties,
     aplicarFiltroRapido,
     limparFiltros,
@@ -608,7 +625,7 @@ function exportarResultados() {
     const csvContent = createCSV(imoveis);
     
     // Download do arquivo
-    downloadCSV(csvContent, 'imoveis-jtr.csv');
+    downloadCSV(csvContent, 'imoveis-template.csv');
     
     showNotification('Exportação realizada com sucesso!', 'success');
 }
