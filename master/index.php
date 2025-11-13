@@ -29,10 +29,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_tenant'])) {
     $site_email = cleanInput($_POST['site_email'] ?? '');
     $primary_color = cleanInput($_POST['primary_color'] ?? '#023A8D');
     $secondary_color = cleanInput($_POST['secondary_color'] ?? '#F7931E');
-    $phone_venda = cleanInput($_POST['phone_venda'] ?? '');
-    $phone_locacao = cleanInput($_POST['phone_locacao'] ?? '');
-    $whatsapp_venda = cleanInput($_POST['whatsapp_venda'] ?? '');
-    $whatsapp_locacao = cleanInput($_POST['whatsapp_locacao'] ?? '');
+    $phone_venda_input = $_POST['phone_venda'] ?? '';
+    $phone_locacao_input = $_POST['phone_locacao'] ?? '';
+    $whatsapp_venda_input = $_POST['whatsapp_venda'] ?? '';
+    $whatsapp_locacao_input = $_POST['whatsapp_locacao'] ?? '';
     $instagram_url = cleanInput($_POST['instagram_url'] ?? '');
     $facebook_url = cleanInput($_POST['facebook_url'] ?? '');
 
@@ -64,6 +64,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_tenant'])) {
             $admin_password = generateRandomPassword(12);
             $generated_password = $admin_password;
         }
+
+        $phone_venda = cleanInput(validateAndFormatPhone($phone_venda_input, 'Telefone (venda)'));
+        $phone_locacao = cleanInput(validateAndFormatPhone($phone_locacao_input, 'Telefone (locação)'));
+        $whatsapp_venda = cleanInput(validateAndFormatPhone($whatsapp_venda_input, 'WhatsApp (venda)'));
+        $whatsapp_locacao = cleanInput(validateAndFormatPhone($whatsapp_locacao_input, 'WhatsApp (locação)'));
 
         $pdo->beginTransaction();
 

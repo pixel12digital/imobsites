@@ -13,6 +13,7 @@
     <link href="../assets/css/admin.css" rel="stylesheet">
 </head>
 <body>
+<?php $currentScript = $_SERVER['PHP_SELF'] ?? ''; ?>
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
@@ -67,8 +68,13 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link <?php echo strpos($_SERVER['PHP_SELF'], 'configuracoes') !== false ? 'active' : ''; ?>" href="../configuracoes/">
+                            <a class="nav-link <?php echo (strpos($currentScript, 'configuracoes/') !== false && strpos($currentScript, 'dados-cliente') === false) ? 'active' : ''; ?>" href="../configuracoes/">
                                 <i class="fas fa-cog me-2"></i>Configurações
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link <?php echo strpos($currentScript, 'dados-cliente') !== false ? 'active' : ''; ?>" href="../configuracoes/dados-cliente.php">
+                                <i class="fas fa-id-card me-2"></i>Dados do Cliente
                             </a>
                         </li>
                         <li class="nav-item">

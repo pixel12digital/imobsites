@@ -60,6 +60,8 @@ if (!$tenant) {
 define('TENANT_ID', (int)$tenant['id']);
 define('TENANT_NAME', $tenant['name']);
 
+$GLOBALS['current_tenant'] = $tenant;
+
 $tenantSettings = fetch("SELECT * FROM tenant_settings WHERE tenant_id = ? LIMIT 1", [TENANT_ID]);
 
 if (!$tenantSettings) {
@@ -73,5 +75,17 @@ $GLOBALS['tenant_settings'] = $tenantSettings;
 
 function tenantSetting(string $key, $default = null) {
     return $GLOBALS['tenant_settings'][$key] ?? $default;
+}
+
+if (!function_exists('currentTenant')) {
+    /**
+     * Retorna o array completo do tenant atual detectado.
+     *
+     * @return array<string, mixed>
+     */
+    function currentTenant(): array
+    {
+        return $GLOBALS['current_tenant'] ?? [];
+    }
 }
 
