@@ -390,7 +390,13 @@ if (!function_exists('listOrders')) {
         $totalResult = fetch($countSql, $params);
         $totalItems = (int)($totalResult['total'] ?? 0);
 
+        // Garante que perPage e offset são inteiros seguros
+        $perPageInt = (int)$perPage;
+        $offsetInt = (int)$offset;
+        
         // Query para listar com JOIN em tenants e plans
+        // LIMIT e OFFSET não podem ser binded como parâmetros no MySQL/MariaDB,
+        // então usamos valores literais garantindo que sejam inteiros
         $sql = "
             SELECT 
                 o.*,
@@ -402,10 +408,8 @@ if (!function_exists('listOrders')) {
             LEFT JOIN plans p ON o.plan_code = p.code
             $whereClause
             ORDER BY o.created_at DESC
-            LIMIT ? OFFSET ?
+            LIMIT $perPageInt OFFSET $offsetInt
         ";
-        $params[] = $perPage;
-        $params[] = $offset;
 
         $items = fetchAll($sql, $params);
 
