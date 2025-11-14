@@ -68,21 +68,29 @@ if (!function_exists('asaasRequest')) {
 
         $curlOptions[CURLOPT_URL] = $url;
 
+        // Log antes da requisição (sem dados sensíveis)
+        if ($method === 'POST' && $path === '/payments' && is_array($payload)) {
+            error_log(sprintf(
+                '[asaas.payment] Enviando cobrança: value=%.2f customer=%s description=%s',
+                (float)($payload['value'] ?? 0),
+                substr((string)($payload['customer'] ?? ''), 0, 20),
+                substr((string)($payload['description'] ?? ''), 0, 50)
+            ));
+        }
+
         $ch = curl_init();
         curl_setopt_array($ch, $curlOptions);
 
         $responseBody = curl_exec($ch);
-
-        if ($responseBody === false) {
-            $error = curl_error($ch);
-            $errno = curl_errno($ch);
-            curl_close($ch);
-            error_log(sprintf('[asaas.http] Erro cURL (%d): %s', $errno, $error));
-            throw new RuntimeException('Não foi possível comunicar com o Asaas.');
-        }
-
+        $curlError = curl_error($ch);
+        $curlErrno = curl_errno($ch);
         $statusCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
+
+        if ($responseBody === false) {
+            error_log(sprintf('[asaas.http.error] Erro de cURL (%d): %s | URL=%s', $curlErrno, $curlError, $url));
+            throw new RuntimeException('Falha de comunicação com o Asaas: ' . ($curlError ?: 'Erro desconhecido'));
+        }
 
         $decoded = null;
 
@@ -90,27 +98,48 @@ if (!function_exists('asaasRequest')) {
             $decoded = json_decode($responseBody, true);
 
             if ($decoded === null && json_last_error() !== JSON_ERROR_NONE) {
-                error_log('[asaas.http] Resposta inválida: ' . substr($responseBody, 0, 1000));
+                error_log('[asaas.http.error] Resposta JSON inválida: ' . substr($responseBody, 0, 1000));
                 throw new RuntimeException('Resposta inválida recebida do Asaas.');
             }
         }
 
         if ($statusCode < 200 || $statusCode >= 300) {
-            $logBody = $decoded ?? $responseBody;
+            // Log detalhado do erro
+            $logBody = is_array($decoded) ? json_encode($decoded) : substr((string)$responseBody, 0, 1000);
             error_log(sprintf(
-                '[asaas.http] %s %s -> HTTP %d | body=%s',
+                '[asaas.http.error] %s %s -> HTTP %d | body=%s',
                 $method,
                 $path,
                 $statusCode,
-                is_scalar($logBody) ? (string)$logBody : json_encode($logBody)
+                $logBody
             ));
 
-            $message = 'Erro na requisição ao Asaas.';
-            if (is_array($decoded) && isset($decoded['errors'][0]['description'])) {
-                $message .= ' ' . $decoded['errors'][0]['description'];
+            // Extrair mensagem de erro do Asaas
+            $asaasMessage = null;
+            if (is_array($decoded)) {
+                // Tenta múltiplos formatos de erro do Asaas
+                if (isset($decoded['errors']) && is_array($decoded['errors']) && isset($decoded['errors'][0]['description'])) {
+                    $asaasMessage = (string)$decoded['errors'][0]['description'];
+                } elseif (isset($decoded['errors']) && is_array($decoded['errors']) && isset($decoded['errors'][0]['message'])) {
+                    $asaasMessage = (string)$decoded['errors'][0]['message'];
+                } elseif (isset($decoded['message'])) {
+                    $asaasMessage = (string)$decoded['message'];
+                } elseif (isset($decoded['error'])) {
+                    $asaasMessage = is_string($decoded['error']) ? $decoded['error'] : json_encode($decoded['error']);
+                }
             }
 
-            throw new RuntimeException($message);
+            // Se não encontrou mensagem específica, usa genérica com status
+            if (!$asaasMessage || trim($asaasMessage) === '') {
+                $asaasMessage = 'Erro ao processar requisição no Asaas (HTTP ' . $statusCode . ')';
+            }
+
+            throw new RuntimeException($asaasMessage);
+        }
+
+        // Log de sucesso para pagamentos
+        if ($method === 'POST' && $path === '/payments' && is_array($decoded)) {
+            error_log('[asaas.payment] Cobrança criada com sucesso. paymentId=' . ($decoded['id'] ?? 'sem-id'));
         }
 
         return is_array($decoded) ? $decoded : [];

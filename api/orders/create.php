@@ -167,8 +167,20 @@ try {
     try {
         $gatewayResponse = createPaymentOnAsaas($order, $plan, $customerPayload);
     } catch (Throwable $asaasError) {
-        error_log('[orders.create.error] Falha ao criar cobrança no Asaas: ' . $asaasError->getMessage());
-        throw new RuntimeException('Não foi possível gerar o link de pagamento. Tente novamente em alguns instantes.', 0, $asaasError);
+        $errorMessage = $asaasError->getMessage();
+        error_log(sprintf(
+            '[orders.create.error] Falha ao criar cobrança no Asaas: %s | orderId=%d | Trace: %s',
+            $errorMessage,
+            $orderId,
+            substr($asaasError->getTraceAsString(), 0, 500)
+        ));
+        
+        // Propaga a mensagem de erro do Asaas se for útil, senão usa genérica
+        if (empty($errorMessage) || strlen(trim($errorMessage)) < 5) {
+            $errorMessage = 'Não foi possível gerar o link de pagamento. Tente novamente em alguns instantes.';
+        }
+        
+        throw new RuntimeException($errorMessage, 0, $asaasError);
     }
 
     updateOrderPaymentData($orderId, [
@@ -196,19 +208,29 @@ try {
     ]);
     exit;
 } catch (RuntimeException $e) {
-    http_response_code(500);
-    error_log('[orders.create.error] ' . $e->getMessage());
+    http_response_code(400);
+    $errorMessage = $e->getMessage();
+    error_log('[orders.create.error] ' . $errorMessage);
+    
+    // Garante que a mensagem não está vazia
+    if (empty($errorMessage) || strlen(trim($errorMessage)) < 5) {
+        $errorMessage = 'Não foi possível gerar o link de pagamento. Tente novamente em alguns instantes.';
+    }
+    
     echo json_encode([
         'success' => false,
-        'message' => $e->getMessage(),
+        'message' => $errorMessage,
     ]);
     exit;
 } catch (Throwable $e) {
     http_response_code(500);
-    error_log('[orders.create.error] Erro interno: ' . $e->getMessage());
+    $errorMessage = $e->getMessage();
+    error_log('[orders.create.error] Erro interno: ' . $errorMessage);
+    
+    // Para erros inesperados, usa mensagem genérica
     echo json_encode([
         'success' => false,
-        'message' => 'Não foi possível criar o pedido.',
+        'message' => 'Não foi possível criar o pedido. Tente novamente em alguns instantes.',
     ]);
     exit;
 }

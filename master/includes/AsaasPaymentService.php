@@ -141,10 +141,23 @@ if (!function_exists('createPaymentOnAsaas')) {
             $paymentPayload['installmentCount'] = (int)$customerData['max_installments'];
         }
 
+        error_log(sprintf(
+            '[asaas.payment] Criando cobrança: orderId=%d plan_code=%s amount=%.2f customerId=%s',
+            $orderId,
+            $planData['code'] ?? 'null',
+            $orderTotal,
+            substr($customerId, 0, 20)
+        ));
+
         try {
             $paymentResponse = asaasCreatePayment($paymentPayload);
         } catch (Throwable $paymentError) {
-            error_log('[asaas.payment.error] Falha ao criar cobrança orderId=' . $orderId . ': ' . $paymentError->getMessage());
+            error_log(sprintf(
+                '[asaas.payment.error] Falha ao criar cobrança orderId=%d: %s | Trace: %s',
+                $orderId,
+                $paymentError->getMessage(),
+                substr($paymentError->getTraceAsString(), 0, 500)
+            ));
             throw $paymentError;
         }
 
@@ -156,10 +169,10 @@ if (!function_exists('createPaymentOnAsaas')) {
         $paymentUrl = resolvePaymentUrlFromAsaasResponse($paymentResponse);
 
         if ($paymentUrl === null) {
-            error_log('[asaas.payment] Cobrança sem URL de pagamento retornada.');
+            error_log('[asaas.payment.warning] Cobrança criada mas sem URL de pagamento retornada. paymentId=' . $providerPaymentId);
+        } else {
+            error_log('[asaas.payment] Cobrança criada com sucesso. paymentId=' . $providerPaymentId . ' orderId=' . $orderId . ' paymentUrl=' . substr($paymentUrl, 0, 100));
         }
-
-        error_log('[asaas.payment] cobrança criada paymentId=' . $providerPaymentId . ' orderId=' . $orderId);
 
         return [
             'provider' => 'asaas',
