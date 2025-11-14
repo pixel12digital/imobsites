@@ -8,6 +8,37 @@
  * - fetch()
  * - fetchAll()
  * Certifique-se de incluir config/database.php antes de carregar este arquivo.
+ *
+ * ============================================================================
+ * ESTRUTURA DA TABELA ORDERS - CAMPOS PRINCIPAIS PARA A TELA DE PEDIDOS
+ * ============================================================================
+ *
+ * Campos principais exibidos na tela master/pedidos.php:
+ *
+ * - id: ID único do pedido
+ * - tenant_id: ID do tenant/cliente vinculado (NULL se ainda não foi criado via webhook)
+ * - plan_code: Código do plano (ex: "BASIC", "PREMIUM")
+ * - payment_method: Método de pagamento ('credit_card', 'pix', 'boleto')
+ * - status: Status do pedido ('pending', 'paid', 'canceled', 'expired')
+ * - total_amount: Valor total do pedido (DECIMAL 10,2)
+ * - payment_url: URL da página de pagamento no Asaas (quando disponível)
+ * - provider_payment_id: ID do pagamento no Asaas (asaas_payment_id)
+ * - provider_subscription_id: ID da assinatura no Asaas (se for assinatura recorrente)
+ * - created_at: Data/hora de criação do pedido
+ * - paid_at: Data/hora em que o pagamento foi confirmado (NULL se ainda não pago)
+ *
+ * Campos adicionais úteis:
+ * - customer_name: Nome do cliente
+ * - customer_email: E-mail do cliente
+ * - customer_cpf_cnpj: CPF/CNPJ do cliente
+ * - billing_cycle: Ciclo de cobrança ('mensal', 'trimestral', etc.)
+ * - subscription_status: Status da assinatura (se aplicável)
+ *
+ * JOIN com tenants:
+ * - Para exibir o nome do cliente quando tenant_id não for NULL, fazemos LEFT JOIN
+ *   na tabela tenants usando orders.tenant_id = tenants.id
+ *
+ * ============================================================================
  */
 
 if (!function_exists('createOrderFromCheckout')) {
@@ -260,6 +291,135 @@ if (!function_exists('findOrderBySubscriptionId')) {
         $order = fetch('SELECT * FROM orders WHERE provider_subscription_id = ? LIMIT 1', [$providerSubscriptionId]);
 
         return $order ?: null;
+    }
+}
+
+if (!function_exists('listOrders')) {
+    /**
+     * Lista pedidos com filtros e paginação.
+     *
+     * Filtros suportados:
+     * - status: 'pending', 'paid', 'canceled', 'expired'
+     * - payment_method: 'credit_card', 'pix', 'boleto'
+     * - plan_code: código do plano (ex: 'BASIC', 'PREMIUM')
+     * - q: busca textual (ID do pedido, nome do cliente, e-mail)
+     * - date_from: data inicial (formato Y-m-d)
+     * - date_to: data final (formato Y-m-d)
+     *
+     * @param array<string,mixed> $filters
+     * @param int $page Página atual (começa em 1)
+     * @param int $perPage Itens por página (padrão: 20)
+     * @return array<string,mixed> ['items' => array, 'pagination' => array]
+     */
+    function listOrders(array $filters = [], int $page = 1, int $perPage = 20): array
+    {
+        if ($page < 1) {
+            $page = 1;
+        }
+        if ($perPage < 1) {
+            $perPage = 20;
+        }
+
+        $offset = ($page - 1) * $perPage;
+
+        // Monta as condições WHERE (reutilizável para contagem e listagem)
+        $whereConditions = [];
+        $params = [];
+
+        // Filtro por status
+        if (!empty($filters['status']) && in_array($filters['status'], ['pending', 'paid', 'canceled', 'expired'], true)) {
+            $whereConditions[] = "o.status = ?";
+            $params[] = $filters['status'];
+        }
+
+        // Filtro por método de pagamento
+        if (!empty($filters['payment_method']) && in_array($filters['payment_method'], ['credit_card', 'pix', 'boleto'], true)) {
+            $whereConditions[] = "o.payment_method = ?";
+            $params[] = $filters['payment_method'];
+        }
+
+        // Filtro por código do plano
+        if (!empty($filters['plan_code'])) {
+            $whereConditions[] = "o.plan_code = ?";
+            $params[] = strtoupper(trim($filters['plan_code']));
+        }
+
+        // Busca textual (ID, nome do cliente, e-mail)
+        if (!empty($filters['q'])) {
+            $searchTerm = '%' . trim($filters['q']) . '%';
+            $exactId = filter_var(trim($filters['q']), FILTER_VALIDATE_INT);
+            if ($exactId !== false) {
+                $whereConditions[] = "(o.id LIKE ? OR o.customer_name LIKE ? OR o.customer_email LIKE ? OR o.id = ?)";
+                $params[] = $searchTerm;
+                $params[] = $searchTerm;
+                $params[] = $searchTerm;
+                $params[] = $exactId;
+            } else {
+                $whereConditions[] = "(o.id LIKE ? OR o.customer_name LIKE ? OR o.customer_email LIKE ?)";
+                $params[] = $searchTerm;
+                $params[] = $searchTerm;
+                $params[] = $searchTerm;
+            }
+        }
+
+        // Filtro por intervalo de datas (created_at)
+        if (!empty($filters['date_from'])) {
+            $dateFrom = date('Y-m-d 00:00:00', strtotime($filters['date_from']));
+            if ($dateFrom !== false) {
+                $whereConditions[] = "o.created_at >= ?";
+                $params[] = $dateFrom;
+            }
+        }
+
+        if (!empty($filters['date_to'])) {
+            $dateTo = date('Y-m-d 23:59:59', strtotime($filters['date_to']));
+            if ($dateTo !== false) {
+                $whereConditions[] = "o.created_at <= ?";
+                $params[] = $dateTo;
+            }
+        }
+
+        $whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
+
+        // Query para contar total
+        $countSql = "
+            SELECT COUNT(*) as total
+            FROM orders o
+            $whereClause
+        ";
+        $totalResult = fetch($countSql, $params);
+        $totalItems = (int)($totalResult['total'] ?? 0);
+
+        // Query para listar com JOIN em tenants e plans
+        $sql = "
+            SELECT 
+                o.*,
+                t.name as tenant_name,
+                t.slug as tenant_slug,
+                p.name as plan_name
+            FROM orders o
+            LEFT JOIN tenants t ON o.tenant_id = t.id
+            LEFT JOIN plans p ON o.plan_code = p.code
+            $whereClause
+            ORDER BY o.created_at DESC
+            LIMIT ? OFFSET ?
+        ";
+        $params[] = $perPage;
+        $params[] = $offset;
+
+        $items = fetchAll($sql, $params);
+
+        $totalPages = $totalItems > 0 ? (int)ceil($totalItems / $perPage) : 0;
+
+        return [
+            'items' => $items ?: [],
+            'pagination' => [
+                'page' => $page,
+                'per_page' => $perPage,
+                'total_items' => $totalItems,
+                'total_pages' => $totalPages,
+            ],
+        ];
     }
 }
 
