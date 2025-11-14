@@ -34,7 +34,7 @@ require_once __DIR__ . '/../master/includes/AsaasClient.php';
 /**
  * Função auxiliar para exibir resultados de forma legível
  */
-function displayResult(bool $isCli, string $status, int $httpCode, ?string $message, ?array $responseData = null): void
+function displayResult(bool $isCli, bool $status, int $httpCode, ?string $message, ?array $responseData = null): void
 {
     if ($isCli) {
         // Saída para CLI (texto simples)
