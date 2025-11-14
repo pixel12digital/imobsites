@@ -168,6 +168,7 @@ if (!function_exists('sendTenantActivationEmail')) {
      * Dispara e-mail com link de ativação.
      * 
      * Agora usa MailService centralizado para envio de e-mails transacionais.
+     * Suporta templates administráveis via EmailTemplateService.
      *
      * @param array<string,mixed> $context
      * @return void
@@ -175,15 +176,18 @@ if (!function_exists('sendTenantActivationEmail')) {
     function sendTenantActivationEmail(array $context): void
     {
         require_once __DIR__ . '/MailService.php';
+        require_once __DIR__ . '/EmailTemplateService.php';
 
         try {
             global $pdo;
             $mailService = new MailService($pdo);
+            $templateService = new EmailTemplateService($pdo);
 
             $email = trim($context['email'] ?? '');
             $name = trim($context['name'] ?? 'Cliente');
             $activationLink = $context['activation_link'] ?? '';
             $primaryDomain = $context['primary_domain'] ?? '';
+            $tenantId = $context['tenant_id'] ?? null;
             $orderId = $context['order_id'] ?? null;
 
             if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -191,56 +195,112 @@ if (!function_exists('sendTenantActivationEmail')) {
                 return;
             }
 
-            $subject = '[ImobSites] Ative sua conta - Acesso ao painel';
-            
-            $content = "<p>Olá, <strong>" . htmlspecialchars($name, ENT_QUOTES) . "</strong>!</p>";
-            $content .= "<p>Seu pagamento foi confirmado e sua conta está pronta para ser ativada.</p>";
-            
-            if ($primaryDomain !== '') {
-                $content .= "<p><strong>Seu domínio:</strong> " . htmlspecialchars($primaryDomain, ENT_QUOTES) . "</p>";
+            // Buscar nome do tenant se disponível
+            $tenantName = $name;
+            if ($tenantId) {
+                try {
+                    $tenant = fetch('SELECT name FROM tenants WHERE id = ? LIMIT 1', [$tenantId]);
+                    if ($tenant && !empty($tenant['name'])) {
+                        $tenantName = $tenant['name'];
+                    }
+                } catch (Throwable $e) {
+                    // Ignorar erro ao buscar tenant
+                }
             }
-            
-            $content .= "<p>Clique no botão abaixo para ativar sua conta e definir sua senha:</p>";
-            
-            if ($activationLink !== '') {
-                $content .= "<p style=\"margin: 30px 0;\">";
-                $content .= "<a href=\"" . htmlspecialchars($activationLink, ENT_QUOTES) . "\" style=\"display: inline-block; padding: 15px 30px; background-color: #F7931E; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold;\">";
-                $content .= "Ativar Minha Conta";
-                $content .= "</a>";
-                $content .= "</p>";
-                
-                $content .= "<p style=\"color: #666; font-size: 14px;\">";
-                $content .= "Ou copie e cole este link no seu navegador:<br>";
-                $content .= "<code style=\"background-color: #f5f5f5; padding: 5px 10px; border-radius: 3px; word-break: break-all;\">" . htmlspecialchars($activationLink, ENT_QUOTES) . "</code>";
-                $content .= "</p>";
-            }
-            
-            $content .= "<p style=\"color: #666; font-size: 12px; margin-top: 30px;\">";
-            $content .= "Este link é válido por 7 dias. Se não ativar sua conta neste período, entre em contato conosco.";
-            $content .= "</p>";
 
-            $htmlBody = $mailService->buildEmailTemplate(
-                'Ative sua Conta - ImobSites',
-                $content
-            );
+            // Tentar carregar template ativo
+            $template = $templateService->findActiveTemplateByEvent('tenant_activation');
+            
+            if ($template) {
+                // Buscar e-mail de suporte (pode vir de email_settings ou config)
+                $supportEmail = '';
+                $supportWhatsapp = '';
+                try {
+                    $emailSettings = fetch('SELECT from_email, reply_to_email FROM email_settings LIMIT 1');
+                    if ($emailSettings) {
+                        $supportEmail = $emailSettings['reply_to_email'] ?? $emailSettings['from_email'] ?? '';
+                    }
+                } catch (Throwable $e) {
+                    // Ignorar erro
+                }
+                
+                // Usar template do banco
+                $variables = [
+                    'customer_name' => $name,
+                    'tenant_name' => $tenantName,
+                    'activation_link' => $activationLink,
+                    'support_email' => $supportEmail,
+                    'support_whatsapp' => $supportWhatsapp,
+                ];
+                
+                $rendered = $templateService->renderTemplate($template, $variables);
+                $subject = $rendered['subject'];
+                $htmlBody = $mailService->buildEmailTemplate(
+                    'Ative sua Conta - ImobSites',
+                    $rendered['html_body']
+                );
+                $textBody = $rendered['text_body'];
+                
+                error_log("[notification.template] Using template {$template['slug']} for event tenant_activation tenant {$tenantId}");
+            } else {
+                // Fallback para conteúdo inline
+                $subject = '[ImobSites] Ative sua conta - Acesso ao painel';
+                
+                $content = "<p>Olá, <strong>" . htmlspecialchars($name, ENT_QUOTES) . "</strong>!</p>";
+                $content .= "<p>Seu pagamento foi confirmado e sua conta está pronta para ser ativada.</p>";
+                
+                if ($primaryDomain !== '') {
+                    $content .= "<p><strong>Seu domínio:</strong> " . htmlspecialchars($primaryDomain, ENT_QUOTES) . "</p>";
+                }
+                
+                $content .= "<p>Clique no botão abaixo para ativar sua conta e definir sua senha:</p>";
+                
+                if ($activationLink !== '') {
+                    $content .= "<p style=\"margin: 30px 0;\">";
+                    $content .= "<a href=\"" . htmlspecialchars($activationLink, ENT_QUOTES) . "\" style=\"display: inline-block; padding: 15px 30px; background-color: #F7931E; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold;\">";
+                    $content .= "Ativar Minha Conta";
+                    $content .= "</a>";
+                    $content .= "</p>";
+                    
+                    $content .= "<p style=\"color: #666; font-size: 14px;\">";
+                    $content .= "Ou copie e cole este link no seu navegador:<br>";
+                    $content .= "<code style=\"background-color: #f5f5f5; padding: 5px 10px; border-radius: 3px; word-break: break-all;\">" . htmlspecialchars($activationLink, ENT_QUOTES) . "</code>";
+                    $content .= "</p>";
+                }
+                
+                $content .= "<p style=\"color: #666; font-size: 12px; margin-top: 30px;\">";
+                $content .= "Este link é válido por 7 dias. Se não ativar sua conta neste período, entre em contato conosco.";
+                $content .= "</p>";
+
+                $htmlBody = $mailService->buildEmailTemplate(
+                    'Ative sua Conta - ImobSites',
+                    $content
+                );
+                $textBody = null;
+                
+                error_log("[notification.template] No active template for event tenant_activation, using fallback");
+            }
 
             $sent = $mailService->send(
                 $email,
                 $name,
                 $subject,
-                $htmlBody
+                $htmlBody,
+                $textBody
             );
 
             if ($sent) {
                 error_log(sprintf(
-                    '[tenant_onboarding] E-mail de ativação enviado com sucesso | orderId=%s | email=%s',
+                    '[tenant_onboarding] E-mail de ativação enviado com sucesso | orderId=%s | tenantId=%s | email=%s',
                     $orderId ?? 'N/A',
+                    $tenantId ?? 'N/A',
                     substr($email, 0, 30)
                 ));
             } else {
                 error_log(sprintf(
-                    '[tenant_onboarding] Falha ao enviar e-mail de ativação | orderId=%s | email=%s',
+                    '[tenant_onboarding] Falha ao enviar e-mail de ativação | orderId=%s | tenantId=%s | email=%s',
                     $orderId ?? 'N/A',
+                    $tenantId ?? 'N/A',
                     substr($email, 0, 30)
                 ));
             }

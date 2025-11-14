@@ -81,6 +81,21 @@ $logoFile = $isDark ? 'logo-imobsites-white.svg' : 'logo-imobsites-full.svg';
                         </a>
                     </li>
                 </ul>
+                <div class="px-3 mb-4 mt-4">
+                    <h6 class="text-uppercase text-muted small">E-mail</h6>
+                </div>
+                <ul class="nav flex-column px-3 gap-1">
+                    <li class="nav-item">
+                        <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) === 'email_settings.php' ? 'active' : ''; ?>" href="email_settings.php">
+                            <i class="fas fa-cog me-2"></i>Configurações de e-mail
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?php echo basename($_SERVER['PHP_SELF']) === 'email_templates.php' ? 'active' : ''; ?>" href="email_templates.php">
+                            <i class="fas fa-envelope-open-text me-2"></i>Templates de e-mail
+                        </a>
+                    </li>
+                </ul>
             </div>
         </nav>
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">

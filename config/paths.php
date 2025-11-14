@@ -7,16 +7,25 @@
 // Detectar o caminho raiz de forma mais robusta
 function detectRootPath() {
     // Tentar diferentes métodos para detectar o caminho raiz
-    $possible_paths = [
-        // Método 1: Usar SCRIPT_NAME (mais confiável)
-        dirname($_SERVER['SCRIPT_NAME']),
-        // Método 2: Usar REQUEST_URI
-        dirname($_SERVER['REQUEST_URI']),
-        // Método 3: Usar PHP_SELF
-        dirname($_SERVER['PHP_SELF']),
-        // Método 4: Fallback para diretório atual
-        '.'
-    ];
+    $possible_paths = [];
+    
+    // Método 1: Usar SCRIPT_NAME (mais confiável)
+    if (isset($_SERVER['SCRIPT_NAME'])) {
+        $possible_paths[] = dirname($_SERVER['SCRIPT_NAME']);
+    }
+    
+    // Método 2: Usar REQUEST_URI
+    if (isset($_SERVER['REQUEST_URI'])) {
+        $possible_paths[] = dirname($_SERVER['REQUEST_URI']);
+    }
+    
+    // Método 3: Usar PHP_SELF
+    if (isset($_SERVER['PHP_SELF'])) {
+        $possible_paths[] = dirname($_SERVER['PHP_SELF']);
+    }
+    
+    // Método 4: Fallback para diretório atual
+    $possible_paths[] = '.';
     
     foreach ($possible_paths as $path) {
         if ($path && $path !== '.' && $path !== '/') {

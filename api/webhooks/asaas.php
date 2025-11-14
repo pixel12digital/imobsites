@@ -72,6 +72,7 @@ require_once __DIR__ . '/../../master/includes/TenantOnboardingService.php';
 require_once __DIR__ . '/../../master/includes/AsaasPaymentService.php';
 require_once __DIR__ . '/../../master/includes/AsaasBillingService.php';
 require_once __DIR__ . '/../../master/includes/AsaasConfig.php';
+require_once __DIR__ . '/../../master/includes/NotificationService.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -254,7 +255,10 @@ try {
     // ========================================================================
     // VERIFICAÇÃO DE STATUS (EVITAR PROCESSAMENTO DUPLICADO)
     // ========================================================================
-    if (($order['status'] ?? '') === 'paid') {
+    $previousStatus = strtolower(trim($order['status'] ?? ''));
+    $hasStatusChangedToPaid = ($previousStatus !== 'paid');
+
+    if (!$hasStatusChangedToPaid) {
         error_log(sprintf('[webhook.asaas] Pedido #%d já está pago. Ignorando webhook.', $orderId));
         http_response_code(200);
         echo json_encode(['success' => true, 'message' => 'Pedido já processado.']);
@@ -337,6 +341,36 @@ try {
             '[webhook.asaas.processed] Pedido #%d já possui tenant_id=%d. Onboarding não será executado novamente.',
             $orderId,
             $updatedOrder['tenant_id']
+        ));
+    }
+
+    // ========================================================================
+    // ENVIO DE E-MAIL DE PAGAMENTO CONFIRMADO
+    // ========================================================================
+    // Envia e-mail de pagamento confirmado apenas se houve transição real para paid
+    // (evita enviar múltiplas vezes se o webhook for chamado várias vezes)
+    if ($hasStatusChangedToPaid) {
+        try {
+            global $pdo;
+            $notificationService = new NotificationService($pdo);
+            $notificationService->sendOrderPaidNotifications($orderId);
+            error_log(sprintf(
+                '[webhook.asaas.processed] E-mail de pagamento confirmado enviado/logado para pedido #%d (transição: %s → paid).',
+                $orderId,
+                $previousStatus
+            ));
+        } catch (Throwable $notificationError) {
+            // Log do erro mas não interrompe o fluxo do webhook (sempre responde sucesso)
+            error_log(sprintf(
+                '[webhook.asaas.notification_paid.error] Falha ao enviar e-mail de pagamento confirmado para pedido #%d: %s',
+                $orderId,
+                $notificationError->getMessage()
+            ));
+        }
+    } else {
+        error_log(sprintf(
+            '[webhook.asaas] E-mail de pagamento confirmado não será enviado para pedido #%d (já estava pago).',
+            $orderId
         ));
     }
 
