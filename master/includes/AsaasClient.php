@@ -190,6 +190,20 @@ if (!function_exists('asaasCreateCustomer')) {
     }
 }
 
+if (!function_exists('asaasUpdateCustomer')) {
+    /**
+     * Atualiza um cliente existente no Asaas.
+     *
+     * @param string $customerId
+     * @param array<string,mixed> $payload
+     * @return array<string,mixed>
+     */
+    function asaasUpdateCustomer(string $customerId, array $payload): array
+    {
+        return asaasRequest('PUT', '/customers/' . $customerId, $payload);
+    }
+}
+
 if (!function_exists('asaasCreatePayment')) {
     /**
      * Cria uma cobrança simples no Asaas.
@@ -200,6 +214,19 @@ if (!function_exists('asaasCreatePayment')) {
     function asaasCreatePayment(array $payload): array
     {
         return asaasRequest('POST', '/payments', $payload);
+    }
+}
+
+if (!function_exists('asaasGetPayment')) {
+    /**
+     * Busca os dados de um pagamento no Asaas.
+     *
+     * @param string $paymentId
+     * @return array<string,mixed>
+     */
+    function asaasGetPayment(string $paymentId): array
+    {
+        return asaasRequest('GET', '/payments/' . $paymentId);
     }
 }
 

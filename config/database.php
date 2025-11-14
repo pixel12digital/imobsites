@@ -92,10 +92,34 @@ function insert($table, $data) {
             $last_id = $pdo->lastInsertId();
             return $last_id;
         } else {
+            $errorInfo = $stmt->errorInfo();
+            error_log(sprintf(
+                "[insert.error] Tabela: %s | SQLSTATE: %s | Código: %s | Mensagem: %s",
+                $table,
+                $errorInfo[0] ?? 'UNKNOWN',
+                $errorInfo[1] ?? 'UNKNOWN',
+                $errorInfo[2] ?? 'Unknown error'
+            ));
             return false;
         }
+    } catch (PDOException $e) {
+        $errorInfo = $e->errorInfo ?? ['UNKNOWN', 'UNKNOWN', $e->getMessage()];
+        error_log(sprintf(
+            "[insert.error] Tabela: %s | SQLSTATE: %s | Código: %s | Mensagem: %s | SQL: %s",
+            $table,
+            $errorInfo[0] ?? 'UNKNOWN',
+            $errorInfo[1] ?? 'UNKNOWN',
+            $errorInfo[2] ?? $e->getMessage(),
+            substr($sql ?? 'N/A', 0, 200)
+        ));
+        return false;
     } catch (Exception $e) {
-        error_log("Erro na função insert: " . $e->getMessage());
+        error_log(sprintf(
+            "[insert.error] Tabela: %s | Erro: %s | Trace: %s",
+            $table,
+            $e->getMessage(),
+            substr($e->getTraceAsString(), 0, 300)
+        ));
         return false;
     }
 }

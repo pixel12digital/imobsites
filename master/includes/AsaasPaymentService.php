@@ -10,6 +10,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/AsaasClient.php';
+require_once __DIR__ . '/AsaasBillingService.php';
 
 if (!function_exists('buildAsaasExternalReference')) {
     /**
@@ -102,10 +103,18 @@ if (!function_exists('createPaymentOnAsaas')) {
         if (is_array($existingCustomer) && isset($existingCustomer['id'])) {
             $customerId = (string)$existingCustomer['id'];
         } else {
+            // Formata telefone para formato internacional do Asaas
+            $mobilePhone = null;
+            if (isset($customerData['mobile_phone']) && !empty($customerData['mobile_phone'])) {
+                $mobilePhone = formatPhoneForAsaas($customerData['mobile_phone']);
+            } elseif (isset($orderData['customer_whatsapp']) && !empty($orderData['customer_whatsapp'])) {
+                $mobilePhone = formatPhoneForAsaas($orderData['customer_whatsapp']);
+            }
+
             $customerPayload = [
                 'name' => $customerName,
                 'email' => $customerEmail,
-                'mobilePhone' => $customerData['mobile_phone'] ?? $orderData['customer_whatsapp'] ?? null,
+                'mobilePhone' => $mobilePhone,
                 'externalReference' => $externalReference,
                 'notificationsDisabled' => false,
             ];

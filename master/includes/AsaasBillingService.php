@@ -30,6 +30,42 @@ if (!function_exists('buildAsaasExternalReference')) {
     }
 }
 
+if (!function_exists('formatPhoneForAsaas')) {
+    /**
+     * Formata telefone brasileiro para o formato internacional esperado pelo Asaas.
+     * Formato esperado: +55 + DDD + número (ex: +5547999999999)
+     *
+     * @param string|null $phone
+     * @return string|null
+     */
+    function formatPhoneForAsaas(?string $phone): ?string
+    {
+        if (empty($phone)) {
+            return null;
+        }
+
+        $phoneDigits = preg_replace('/\D+/', '', (string)$phone);
+        error_log('[asaas.phone.format] Telefone original: ' . $phone . ' | Dígitos: ' . $phoneDigits);
+        
+        // Remove código do país se já estiver presente (55)
+        if (substr($phoneDigits, 0, 2) === '55' && strlen($phoneDigits) > 11) {
+            $phoneDigits = substr($phoneDigits, 2);
+            error_log('[asaas.phone.format] Removido código 55, dígitos restantes: ' . $phoneDigits);
+        }
+        
+        // Valida se tem DDD + número (10 ou 11 dígitos)
+        if (strlen($phoneDigits) >= 10 && strlen($phoneDigits) <= 11) {
+            // Formato: +55 + DDD + número
+            $formatted = '+55' . $phoneDigits;
+            error_log('[asaas.phone.format] Telefone formatado: ' . $formatted);
+            return $formatted;
+        }
+        
+        error_log('[asaas.phone.format] Telefone inválido (deve ter 10 ou 11 dígitos): ' . $phoneDigits . ' (tamanho: ' . strlen($phoneDigits) . ')');
+        return null;
+    }
+}
+
 if (!function_exists('ensureCustomerForOrder')) {
     /**
      * Garante que existe um customer no Asaas para o pedido.
@@ -60,6 +96,21 @@ if (!function_exists('ensureCustomerForOrder')) {
         if (is_array($existingCustomer) && isset($existingCustomer['id'])) {
             $customerId = (string)$existingCustomer['id'];
 
+            // Verifica se o customer precisa ser atualizado com CPF/CNPJ
+            $existingCpfCnpj = $existingCustomer['cpfCnpj'] ?? null;
+            if (($existingCpfCnpj === null || $existingCpfCnpj === '') && 
+                $customerCpfCnpj !== null && $customerCpfCnpj !== '') {
+                // Atualiza o customer com CPF/CNPJ
+                try {
+                    $updatePayload = ['cpfCnpj' => $customerCpfCnpj];
+                    asaasUpdateCustomer($customerId, $updatePayload);
+                    error_log('[asaas.customer.update] CPF/CNPJ adicionado ao customer existente: ' . substr($customerCpfCnpj, 0, 3) . '***');
+                } catch (Throwable $e) {
+                    error_log('[asaas.customer.update.error] Falha ao atualizar customer com CPF: ' . $e->getMessage());
+                    // Continua mesmo se a atualização falhar
+                }
+            }
+
             // Atualiza o pedido com o customer_id encontrado
             if (isset($orderData['id'])) {
                 update('orders', [
@@ -75,12 +126,20 @@ if (!function_exists('ensureCustomerForOrder')) {
         $orderId = (int)($orderData['id'] ?? 0);
         $externalReference = $orderId > 0 ? buildAsaasExternalReference($orderId) : null;
 
+        // Formata telefone para formato internacional do Asaas (+55 + DDD + número)
+        $mobilePhone = formatPhoneForAsaas($orderData['customer_whatsapp'] ?? null);
+        
+        error_log('[asaas.customer.create] Dados do payload: name=' . ($orderData['customer_name'] ?? 'NULL') . ' | email=' . $customerEmail . ' | mobilePhone=' . ($mobilePhone ?? 'NULL'));
+
         $customerPayload = [
             'name' => (string)($orderData['customer_name'] ?? ''),
             'email' => $customerEmail,
-            'mobilePhone' => isset($orderData['customer_whatsapp']) ? preg_replace('/\D+/', '', (string)$orderData['customer_whatsapp']) : null,
+            'mobilePhone' => $mobilePhone,
             'notificationsDisabled' => false,
         ];
+        
+        // Log do payload completo antes de enviar
+        error_log('[asaas.customer.create] Payload completo: ' . json_encode($customerPayload, JSON_UNESCAPED_UNICODE));
 
         if ($customerCpfCnpj !== null && $customerCpfCnpj !== '') {
             $customerPayload['cpfCnpj'] = $customerCpfCnpj;
@@ -138,6 +197,9 @@ if (!function_exists('createPrepaidPayment')) {
         $externalReference = buildAsaasExternalReference($orderId);
         $planName = (string)($planData['name'] ?? $orderData['plan_code'] ?? 'Plano ImobSites');
         $totalAmount = (float)($orderData['total_amount'] ?? 0.0);
+        
+        // Log para debug do orderData recebido
+        error_log('[asaas.payment.create] orderData recebido - customer_cpf_cnpj: ' . ($orderData['customer_cpf_cnpj'] ?? 'NULL'));
 
         if ($totalAmount <= 0) {
             throw new InvalidArgumentException('Valor do pedido inválido para cobrança Asaas.');
@@ -156,6 +218,9 @@ if (!function_exists('createPrepaidPayment')) {
             throw new InvalidArgumentException('Método de pagamento inválido: ' . $paymentMethod);
         }
 
+        // Calcula data de vencimento (padrão: 3 dias a partir de hoje)
+        $dueDate = date('Y-m-d', strtotime('+3 days'));
+        
         // Monta payload base
         $paymentPayload = [
             'customer' => $customerId,
@@ -163,7 +228,30 @@ if (!function_exists('createPrepaidPayment')) {
             'value' => $totalAmount,
             'description' => sprintf('ImobSites - %s - Pedido #%d', $planName, $orderId),
             'externalReference' => $externalReference,
+            'dueDate' => $dueDate, // Obrigatório para PIX e Boleto
         ];
+
+        // Para PIX e Boleto, o Asaas pode exigir CPF/CNPJ do cliente
+        // Adiciona CPF/CNPJ se disponível no orderData
+        if (in_array($paymentMethod, ['pix', 'boleto'], true)) {
+            $customerCpfCnpj = isset($orderData['customer_cpf_cnpj']) ? preg_replace('/\D+/', '', (string)$orderData['customer_cpf_cnpj']) : null;
+            
+            // Log para debug
+            error_log(sprintf(
+                '[asaas.payment.create] Verificando CPF/CNPJ para %s: orderData[customer_cpf_cnpj]=%s | resultado=%s',
+                $paymentMethod,
+                $orderData['customer_cpf_cnpj'] ?? 'NULL',
+                $customerCpfCnpj ?? 'NULL'
+            ));
+            
+            if ($customerCpfCnpj !== null && $customerCpfCnpj !== '') {
+                $paymentPayload['cpfCnpj'] = $customerCpfCnpj;
+                error_log('[asaas.payment.create] CPF/CNPJ adicionado ao payload PIX/Boleto: ' . substr($customerCpfCnpj, 0, 3) . '***');
+            } else {
+                error_log('[asaas.payment.create] AVISO: CPF/CNPJ não fornecido para ' . $paymentMethod . ' - Asaas pode rejeitar');
+                error_log('[asaas.payment.create] DEBUG orderData keys: ' . implode(', ', array_keys($orderData)));
+            }
+        }
 
         // Para cartão de crédito, adiciona dados do cartão e parcelamento
         if ($paymentMethod === 'credit_card' && is_array($cardData)) {
@@ -190,14 +278,42 @@ if (!function_exists('createPrepaidPayment')) {
             if (isset($cardData['ccv'])) {
                 $creditCard['ccv'] = (string)$cardData['ccv'];
             }
-
-            // Dados do titular
-            $holderInfo = [];
-            if (isset($cardData['holderName'])) {
-                $holderInfo['name'] = (string)$cardData['holderName'];
+            
+            // O Asaas pode exigir holderName também no objeto creditCard
+            $holderName = $cardData['holderName'] ?? $orderData['customer_name'] ?? null;
+            if ($holderName !== null) {
+                $creditCard['holderName'] = (string)$holderName;
             }
+
+            // Dados do titular (obrigatórios para cartão de crédito)
+            $holderInfo = [];
+            
+            // Nome do titular (obrigatório)
+            $holderName = $cardData['holderName'] ?? $orderData['customer_name'] ?? null;
+            if ($holderName !== null) {
+                $holderInfo['name'] = (string)$holderName;
+            }
+            
+            // Email do titular (obrigatório)
+            if (isset($orderData['customer_email'])) {
+                $holderInfo['email'] = (string)$orderData['customer_email'];
+            }
+            
+            // CPF/CNPJ do titular (obrigatório)
             if (isset($cardData['cpfCnpj']) || isset($orderData['customer_cpf_cnpj'])) {
                 $holderInfo['cpfCnpj'] = preg_replace('/\D+/', '', (string)($cardData['cpfCnpj'] ?? $orderData['customer_cpf_cnpj'] ?? ''));
+            }
+            
+            // Telefone do titular (formata para formato internacional)
+            if (isset($cardData['phone'])) {
+                $holderInfo['phone'] = formatPhoneForAsaas($cardData['phone']);
+            } elseif (isset($orderData['customer_whatsapp'])) {
+                $holderInfo['phone'] = formatPhoneForAsaas($orderData['customer_whatsapp']);
+            }
+            
+            // Celular do titular
+            if (isset($orderData['customer_whatsapp'])) {
+                $holderInfo['mobilePhone'] = formatPhoneForAsaas($orderData['customer_whatsapp']);
             }
             if (isset($cardData['postalCode'])) {
                 $holderInfo['postalCode'] = preg_replace('/\D+/', '', (string)$cardData['postalCode']);
@@ -227,6 +343,17 @@ if (!function_exists('createPrepaidPayment')) {
             if (!empty($creditCard)) {
                 $paymentPayload['creditCard'] = $creditCard;
             }
+            
+            // Log dos dados do cartão e titular antes de enviar
+            error_log('[asaas.billing] Dados do cartão: ' . json_encode($creditCard, JSON_UNESCAPED_UNICODE));
+            error_log('[asaas.billing] Dados do titular: ' . json_encode($holderInfo, JSON_UNESCAPED_UNICODE));
+            
+            // O Asaas exige creditCardHolderInfo quando usa cartão de crédito
+            // Garante que pelo menos name, email e cpfCnpj estão presentes
+            if (empty($holderInfo['name']) || empty($holderInfo['email']) || empty($holderInfo['cpfCnpj'])) {
+                error_log('[asaas.billing] AVISO: Dados do titular incompletos. name=' . ($holderInfo['name'] ?? 'NULL') . ' email=' . ($holderInfo['email'] ?? 'NULL') . ' cpfCnpj=' . ($holderInfo['cpfCnpj'] ?? 'NULL'));
+            }
+            
             if (!empty($holderInfo)) {
                 $paymentPayload['creditCardHolderInfo'] = $holderInfo;
             }
@@ -239,6 +366,9 @@ if (!function_exists('createPrepaidPayment')) {
             $totalAmount,
             $orderData['payment_installments'] ?? 1
         ));
+        
+        // Log do payload completo antes de enviar
+        error_log('[asaas.billing] Payload completo da cobrança: ' . json_encode($paymentPayload, JSON_UNESCAPED_UNICODE));
 
         try {
             $paymentResponse = asaasCreatePayment($paymentPayload);
@@ -254,6 +384,53 @@ if (!function_exists('createPrepaidPayment')) {
         $providerPaymentId = (string)($paymentResponse['id'] ?? '');
         if ($providerPaymentId === '') {
             throw new RuntimeException('Cobrança criada no Asaas sem identificador.');
+        }
+
+        // Para PIX, se os dados não estiverem na resposta inicial, busca novamente
+        // (às vezes o Asaas demora alguns segundos para gerar os dados do PIX)
+        if ($paymentMethod === 'pix') {
+            $pixTransaction = $paymentResponse['pixTransaction'] ?? null;
+            $pixPayload = $paymentResponse['pixPayload'] 
+                ?? $paymentResponse['pixCopiaECola'] 
+                ?? $paymentResponse['pixCopyPaste']
+                ?? null;
+            
+            // Se não encontrou os dados do PIX, tenta buscar o pagamento novamente (até 3 tentativas)
+            if ($pixTransaction === null && $pixPayload === null) {
+                error_log('[asaas.billing] Dados do PIX não encontrados na resposta inicial, buscando pagamento novamente...');
+                $maxAttempts = 3;
+                $attempt = 0;
+                
+                while ($attempt < $maxAttempts) {
+                    try {
+                        sleep(2); // Aguarda 2 segundos entre tentativas
+                        $attempt++;
+                        error_log("[asaas.billing] Tentativa $attempt de $maxAttempts para buscar dados do PIX...");
+                        
+                        $paymentResponse = asaasGetPayment($providerPaymentId);
+                        $pixTransaction = $paymentResponse['pixTransaction'] ?? null;
+                        
+                        if ($pixTransaction !== null && is_array($pixTransaction) && !empty($pixTransaction)) {
+                            error_log('[asaas.billing] Dados do PIX encontrados na tentativa ' . $attempt);
+                            break; // Dados encontrados, sai do loop
+                        }
+                        
+                        if ($attempt < $maxAttempts) {
+                            error_log('[asaas.billing] Dados do PIX ainda não disponíveis, tentando novamente...');
+                        }
+                    } catch (Throwable $e) {
+                        error_log('[asaas.billing] Erro ao buscar dados do PIX (tentativa ' . $attempt . '): ' . $e->getMessage());
+                        if ($attempt >= $maxAttempts) {
+                            // Última tentativa falhou, continua com a resposta original
+                            break;
+                        }
+                    }
+                }
+                
+                if ($pixTransaction === null) {
+                    error_log('[asaas.billing] AVISO: Dados do PIX não disponíveis após ' . $maxAttempts . ' tentativas. O cliente pode consultar o pagamento pelo payment_id.');
+                }
+            }
         }
 
         // Extrai dados de resposta conforme método de pagamento
@@ -273,8 +450,48 @@ if (!function_exists('createPrepaidPayment')) {
 
         // Dados do Pix
         if ($paymentMethod === 'pix') {
-            $result['pix_payload'] = $paymentResponse['pixPayload'] ?? $paymentResponse['pixCopiaECola'] ?? null;
-            $result['pix_qr_code_image'] = $paymentResponse['pixQrCodeImage'] ?? null;
+            // Log da resposta completa para debug
+            error_log('[asaas.billing] Resposta completa do PIX: ' . json_encode($paymentResponse, JSON_UNESCAPED_UNICODE));
+            
+            // O Asaas retorna os dados do PIX em pixTransaction quando disponível
+            $pixTransaction = $paymentResponse['pixTransaction'] ?? null;
+            
+            if (is_array($pixTransaction) && !empty($pixTransaction)) {
+                // Dados do PIX estão disponíveis
+                $result['pix_payload'] = $pixTransaction['payload'] 
+                    ?? $pixTransaction['pixCopiaECola']
+                    ?? $pixTransaction['pixCopyPaste']
+                    ?? null;
+                
+                $result['pix_qr_code_image'] = $pixTransaction['encodedImage'] 
+                    ?? $pixTransaction['qrCodeImage']
+                    ?? $pixTransaction['qrCode']
+                    ?? null;
+            } else {
+                // Tenta campos diretos na resposta (formato alternativo)
+                $result['pix_payload'] = $paymentResponse['pixPayload'] 
+                    ?? $paymentResponse['pixCopiaECola'] 
+                    ?? $paymentResponse['pixCopyPaste']
+                    ?? null;
+                
+                $result['pix_qr_code_image'] = $paymentResponse['pixQrCodeImage'] 
+                    ?? $paymentResponse['pixQrCode']
+                    ?? null;
+            }
+            
+            // URL do PIX (sempre disponível, mesmo quando pixTransaction é null)
+            if (isset($paymentResponse['invoiceUrl'])) {
+                $result['payment_url'] = $paymentResponse['invoiceUrl'];
+            } elseif (isset($paymentResponse['paymentLink'])) {
+                $result['payment_url'] = $paymentResponse['paymentLink'];
+            }
+            
+            // Se os dados do PIX ainda não estão disponíveis, informa no log
+            if ($result['pix_payload'] === null) {
+                error_log('[asaas.billing] AVISO: Dados do PIX ainda não disponíveis. O cliente pode usar a payment_url para acessar a página de pagamento.');
+                // No sandbox do Asaas, os dados do PIX podem não ser gerados imediatamente
+                // A URL de pagamento permite que o cliente acesse e veja o QR code
+            }
         }
 
         // Dados do boleto

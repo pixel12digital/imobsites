@@ -214,6 +214,7 @@ try {
     }
 
     error_log('[orders.create] pedido criado ID=' . $orderId . ' para plan_code=' . $validated['plan_code'] . ' billing_mode=' . $billingMode);
+    error_log('[orders.create] DEBUG order após criação: customer_cpf_cnpj=' . ($order['customer_cpf_cnpj'] ?? 'NULL'));
 
     try {
         // Garante que existe customer no Asaas
@@ -308,7 +309,18 @@ try {
             if ($validated['payment_method'] === 'pix') {
                 $responseData['pix_payload'] = $gatewayResponse['pix_payload'] ?? null;
                 $responseData['pix_qr_code_image'] = $gatewayResponse['pix_qr_code_image'] ?? null;
-                $responseData['message'] = 'Pagamento Pix gerado. Escaneie o QR code ou copie o código Pix.';
+                
+                // Adiciona URL de pagamento (sempre disponível, mesmo quando pix_payload é null)
+                if (isset($gatewayResponse['payment_url'])) {
+                    $responseData['payment_url'] = $gatewayResponse['payment_url'];
+                }
+                
+                // Ajusta mensagem conforme disponibilidade dos dados
+                if ($responseData['pix_payload'] !== null) {
+                    $responseData['message'] = 'Pagamento Pix gerado. Escaneie o QR code ou copie o código Pix.';
+                } else {
+                    $responseData['message'] = 'Pagamento Pix gerado. Acesse a URL de pagamento para visualizar o QR code.';
+                }
             } elseif ($validated['payment_method'] === 'boleto') {
                 $responseData['boleto_url'] = $gatewayResponse['boleto_url'] ?? null;
                 $responseData['boleto_barcode'] = $gatewayResponse['boleto_barcode'] ?? null;
