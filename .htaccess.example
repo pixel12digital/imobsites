@@ -5,12 +5,22 @@
 RewriteEngine On
 
 # Configuração Asaas (produção)
+# IMPORTANTE: Copie este arquivo para .htaccess e preencha com suas credenciais reais
+# NUNCA faça commit do arquivo .htaccess com credenciais reais!
 <IfModule mod_env.c>
-    SetEnv ASAAS_API_KEY "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjRmN2Q5YzRlLTA4OGQtNDlkYi1iMjBmLWMwN2M3NzkzMGQyMzo6JGFhY2hfYTQ1ZjdmOTctMTAxNC00MjVhLTg1NmUtMzJjMzNhYmI4OTA3"
+    SetEnv ASAAS_API_KEY "SUA_CHAVE_DE_API_AQUI"
     SetEnv ASAAS_ENV "production"
     SetEnv ASAAS_API_BASE_URL "https://api.asaas.com/v3"
-    SetEnv ASAAS_WEBHOOK_TOKEN "imobsites_production_webhook_token"
+    SetEnv ASAAS_WEBHOOK_TOKEN "seu_webhook_token_aqui"
 </IfModule>
+
+# Para ambiente sandbox (testes), use:
+# <IfModule mod_env.c>
+#     SetEnv ASAAS_API_KEY "SUA_CHAVE_DE_API_SANDBOX_AQUI"
+#     SetEnv ASAAS_ENV "sandbox"
+#     SetEnv ASAAS_API_BASE_URL "https://api-sandbox.asaas.com/v3"
+#     SetEnv ASAAS_WEBHOOK_TOKEN "seu_webhook_token_sandbox_aqui"
+# </IfModule>
 
 # Configurações de segurança básicas
 Options -Indexes
@@ -86,3 +96,4 @@ Options -Indexes
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ index.php [QSA,L]
+

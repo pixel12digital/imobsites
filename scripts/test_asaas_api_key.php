@@ -56,14 +56,15 @@ if (strlen($apiKey) < 50) {
     $issues[] = "Chave muito curta (mínimo esperado: 50 caracteres)";
 }
 
-// Verificar caracteres inválidos
-if (preg_match('/[^\w\-_]/', $apiKey)) {
-    $issues[] = "Chave contém caracteres inválidos";
+// Verificar caracteres inválidos (permite $ no início)
+$keyToCheck = ltrim($apiKey, '$');
+if (preg_match('/[^\w\-_]/', $keyToCheck)) {
+    $issues[] = "Chave contém caracteres inválidos (após remover o prefixo '$')";
 }
 
-// Verificar se começa com o prefixo esperado
-if (!preg_match('/^aact_/', $apiKey)) {
-    $issues[] = "Chave não começa com o prefixo esperado 'aact_'";
+// Verificar se começa com o prefixo esperado (aceita $aact_prod_ ou aact_)
+if (!preg_match('/^\$?aact_(prod_|YTU|hmlg_)?/', $apiKey)) {
+    $issues[] = "Chave não começa com o prefixo esperado ('aact_' ou '\$aact_prod_')";
 }
 
 if (empty($issues)) {

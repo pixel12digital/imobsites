@@ -1,5 +1,6 @@
 # Arquivos de configuração com credenciais (NÃO versionar)
 config/asaas.php
+.htaccess
 
 # Arquivos de log
 *.log
