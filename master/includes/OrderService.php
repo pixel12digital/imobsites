@@ -25,14 +25,24 @@ if (!function_exists('createOrderFromCheckout')) {
             'customer_name' => $data['customer_name'],
             'customer_email' => $data['customer_email'],
             'customer_whatsapp' => $data['customer_whatsapp'] ?? null,
+            'customer_cpf_cnpj' => isset($data['customer_cpf_cnpj']) ? preg_replace('/\D+/', '', (string)$data['customer_cpf_cnpj']) : null,
             'plan_code' => $data['plan_code'],
             'billing_cycle' => $data['billing_cycle'],
             'total_amount' => $data['total_amount'],
             'max_installments' => $data['max_installments'] ?? 1,
+            'payment_method' => $data['payment_method'] ?? null,
+            'payment_installments' => $data['payment_installments'] ?? 1,
             'status' => $data['status'] ?? 'pending',
-            'payment_provider' => $data['payment_provider'],
+            'payment_provider' => $data['payment_provider'] ?? 'asaas',
             'provider_payment_id' => $data['provider_payment_id'] ?? null,
+            'provider_subscription_id' => $data['provider_subscription_id'] ?? null,
+            'subscription_status' => $data['subscription_status'] ?? null,
             'payment_url' => $data['payment_url'] ?? null,
+            'pix_payload' => $data['pix_payload'] ?? null,
+            'pix_qr_code_image' => $data['pix_qr_code_image'] ?? null,
+            'boleto_url' => $data['boleto_url'] ?? null,
+            'boleto_barcode' => $data['boleto_barcode'] ?? null,
+            'asaas_customer_id' => $data['asaas_customer_id'] ?? null,
             'paid_at' => null,
             'tenant_id' => null,
             'created_at' => $now,
@@ -61,8 +71,36 @@ if (!function_exists('updateOrderPaymentData')) {
             $fields['provider_payment_id'] = $gatewayData['provider_payment_id'];
         }
 
+        if (isset($gatewayData['provider_subscription_id'])) {
+            $fields['provider_subscription_id'] = $gatewayData['provider_subscription_id'];
+        }
+
+        if (isset($gatewayData['subscription_status'])) {
+            $fields['subscription_status'] = $gatewayData['subscription_status'];
+        }
+
         if (isset($gatewayData['payment_url'])) {
             $fields['payment_url'] = $gatewayData['payment_url'];
+        }
+
+        if (isset($gatewayData['pix_payload'])) {
+            $fields['pix_payload'] = $gatewayData['pix_payload'];
+        }
+
+        if (isset($gatewayData['pix_qr_code_image'])) {
+            $fields['pix_qr_code_image'] = $gatewayData['pix_qr_code_image'];
+        }
+
+        if (isset($gatewayData['boleto_url'])) {
+            $fields['boleto_url'] = $gatewayData['boleto_url'];
+        }
+
+        if (isset($gatewayData['boleto_barcode'])) {
+            $fields['boleto_barcode'] = $gatewayData['boleto_barcode'];
+        }
+
+        if (isset($gatewayData['asaas_customer_id'])) {
+            $fields['asaas_customer_id'] = $gatewayData['asaas_customer_id'];
         }
 
         if (isset($gatewayData['status'])) {
@@ -71,6 +109,10 @@ if (!function_exists('updateOrderPaymentData')) {
 
         if (isset($gatewayData['max_installments'])) {
             $fields['max_installments'] = (int)$gatewayData['max_installments'];
+        }
+
+        if (isset($gatewayData['payment_installments'])) {
+            $fields['payment_installments'] = (int)$gatewayData['payment_installments'];
         }
 
         if (empty($fields)) {
@@ -140,6 +182,25 @@ if (!function_exists('findOrderByProviderId')) {
         }
 
         $order = fetch('SELECT * FROM orders WHERE provider_payment_id = ? LIMIT 1', [$providerPaymentId]);
+
+        return $order ?: null;
+    }
+}
+
+if (!function_exists('findOrderBySubscriptionId')) {
+    /**
+     * Recupera um pedido a partir do ID de assinatura do gateway.
+     *
+     * @param string $providerSubscriptionId
+     * @return array<string,mixed>|null
+     */
+    function findOrderBySubscriptionId(string $providerSubscriptionId): ?array
+    {
+        if ($providerSubscriptionId === '') {
+            return null;
+        }
+
+        $order = fetch('SELECT * FROM orders WHERE provider_subscription_id = ? LIMIT 1', [$providerSubscriptionId]);
 
         return $order ?: null;
     }

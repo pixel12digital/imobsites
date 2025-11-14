@@ -14,6 +14,7 @@ require_once __DIR__ . '/../../master/utils.php';
 require_once __DIR__ . '/../../master/includes/OrderService.php';
 require_once __DIR__ . '/../../master/includes/TenantOnboardingService.php';
 require_once __DIR__ . '/../../master/includes/AsaasPaymentService.php';
+require_once __DIR__ . '/../../master/includes/AsaasBillingService.php';
 require_once __DIR__ . '/../../master/includes/AsaasConfig.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -119,11 +120,20 @@ try {
     error_log('[webhook.asaas.payload] ' . substr(json_encode($payload), 0, 2000));
 
     $eventType = (string)($payload['event'] ?? '');
-    $paymentData = is_array($payload['payment'] ?? null) ? $payload['payment'] : $payload;
+    
+    // Pode ser notificação de payment ou subscription
+    $paymentData = is_array($payload['payment'] ?? null) ? $payload['payment'] : null;
+    $subscriptionData = is_array($payload['subscription'] ?? null) ? $payload['subscription'] : null;
+    
+    // Se não tem payment nem subscription, tenta usar o payload direto
+    if (!$paymentData && !$subscriptionData) {
+        $paymentData = $payload;
+    }
 
     $providerPaymentId = $paymentData['id'] ?? $paymentData['provider_payment_id'] ?? null;
-    $status = (string)($paymentData['status'] ?? '');
-    $externalReference = $paymentData['externalReference'] ?? null;
+    $providerSubscriptionId = $subscriptionData['id'] ?? $subscriptionData['provider_subscription_id'] ?? null;
+    $status = (string)($paymentData['status'] ?? $subscriptionData['status'] ?? '');
+    $externalReference = $paymentData['externalReference'] ?? $subscriptionData['externalReference'] ?? null;
 
     $order = null;
     $parsedOrderId = parseOrderIdFromAsaasReference(is_string($externalReference) ? $externalReference : null);
@@ -136,8 +146,12 @@ try {
         $order = findOrderByProviderId((string)$providerPaymentId);
     }
 
+    if (!$order && $providerSubscriptionId) {
+        $order = findOrderBySubscriptionId((string)$providerSubscriptionId);
+    }
+
     if (!$order) {
-        error_log('[webhook.asaas] Pedido não encontrado para externalReference=' . ($externalReference ?? 'null') . ' providerPaymentId=' . ($providerPaymentId ?? 'null'));
+        error_log('[webhook.asaas] Pedido não encontrado para externalReference=' . ($externalReference ?? 'null') . ' providerPaymentId=' . ($providerPaymentId ?? 'null') . ' providerSubscriptionId=' . ($providerSubscriptionId ?? 'null'));
         http_response_code(200);
         echo json_encode(['success' => true]);
         exit;
@@ -156,14 +170,33 @@ try {
         exit;
     }
 
-    $paidAt = $paymentData['confirmedDate'] ?? $paymentData['paymentDate'] ?? date('Y-m-d H:i:s');
+    // Determina data de pagamento
+    $paidAt = $paymentData['confirmedDate'] ?? $paymentData['paymentDate'] ?? 
+              $subscriptionData['confirmedDate'] ?? $subscriptionData['paymentDate'] ?? 
+              date('Y-m-d H:i:s');
 
-    $updatedOrder = markOrderAsPaid((int)$order['id'], [
-        'provider_payment_id' => $providerPaymentId ? (string)$providerPaymentId : null,
+    // Atualiza dados do pedido
+    $updateData = [
         'paid_at' => $paidAt,
-    ]);
+    ];
 
-    onPaidOrderCreateTenantAndSendActivation((int)$updatedOrder['id']);
+    if ($providerPaymentId) {
+        $updateData['provider_payment_id'] = (string)$providerPaymentId;
+    }
+
+    if ($providerSubscriptionId) {
+        $updateData['provider_subscription_id'] = (string)$providerSubscriptionId;
+        $updateData['subscription_status'] = strtolower($status);
+    }
+
+    $updatedOrder = markOrderAsPaid((int)$order['id'], $updateData);
+
+    // Dispara onboarding apenas se ainda não foi criado o tenant
+    if (empty($updatedOrder['tenant_id'])) {
+        onPaidOrderCreateTenantAndSendActivation((int)$updatedOrder['id']);
+    } else {
+        error_log('[webhook.asaas] Pedido #' . $updatedOrder['id'] . ' já possui tenant_id=' . $updatedOrder['tenant_id'] . '. Onboarding não será executado novamente.');
+    }
 
     http_response_code(200);
     echo json_encode(['success' => true]);

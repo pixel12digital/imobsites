@@ -1,0 +1,23 @@
+# Arquivos de configuração com credenciais (NÃO versionar)
+config/asaas.php
+
+# Arquivos de log
+*.log
+
+# Arquivos temporários
+*.tmp
+*.temp
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Uploads (se necessário)
+# uploads/*
+

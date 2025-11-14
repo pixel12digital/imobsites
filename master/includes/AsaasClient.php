@@ -203,4 +203,43 @@ if (!function_exists('asaasCreatePayment')) {
     }
 }
 
+if (!function_exists('asaasCreateSubscription')) {
+    /**
+     * Cria uma assinatura recorrente no Asaas.
+     *
+     * @param array<string,mixed> $payload
+     * @return array<string,mixed>
+     */
+    function asaasCreateSubscription(array $payload): array
+    {
+        return asaasRequest('POST', '/subscriptions', $payload);
+    }
+}
+
+if (!function_exists('asaasGetSubscription')) {
+    /**
+     * Busca uma assinatura no Asaas pelo ID.
+     *
+     * @param string $subscriptionId
+     * @return array<string,mixed>
+     */
+    function asaasGetSubscription(string $subscriptionId): array
+    {
+        return asaasRequest('GET', '/subscriptions/' . $subscriptionId);
+    }
+}
+
+if (!function_exists('asaasCancelSubscription')) {
+    /**
+     * Cancela uma assinatura no Asaas.
+     *
+     * @param string $subscriptionId
+     * @return array<string,mixed>
+     */
+    function asaasCancelSubscription(string $subscriptionId): array
+    {
+        return asaasRequest('DELETE', '/subscriptions/' . $subscriptionId);
+    }
+}
+
 
