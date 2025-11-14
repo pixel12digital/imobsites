@@ -6,3 +6,4 @@ ADD COLUMN cancel_reason VARCHAR(255) DEFAULT NULL AFTER canceled_at;
 
 CREATE INDEX idx_orders_canceled_at ON orders (canceled_at);
 
+

@@ -15,6 +15,7 @@ require_once __DIR__ . '/../../master/utils.php';
 require_once __DIR__ . '/../../master/includes/OrderService.php';
 require_once __DIR__ . '/../../master/includes/PlanService.php';
 require_once __DIR__ . '/../../master/includes/AsaasBillingService.php';
+require_once __DIR__ . '/../../master/includes/NotificationService.php';
 
 // CORS para permitir o checkout do domínio público
 $allowedOrigin = 'https://imobsites.com.br';
@@ -239,6 +240,14 @@ try {
                 'status' => 'pending',
             ]);
 
+            // Envia notificação de pedido criado (não quebra o fluxo em caso de falha)
+            try {
+                $notificationService = new NotificationService($pdo);
+                $notificationService->sendOrderCreatedNotifications($orderId);
+            } catch (Throwable $e) {
+                error_log('[notification.order_created.error] Falha ao enviar notificação para pedido ' . $orderId . ': ' . $e->getMessage());
+            }
+
             $responseData = [
                 'success' => true,
                 'order_id' => $orderId,
@@ -295,7 +304,19 @@ try {
                 $updateData['boleto_barcode'] = $gatewayResponse['boleto_barcode'];
             }
 
+            if (isset($gatewayResponse['boleto_line'])) {
+                $updateData['boleto_line'] = $gatewayResponse['boleto_line'];
+            }
+
             updateOrderPaymentData($orderId, $updateData);
+
+            // Envia notificação de pedido criado (não quebra o fluxo em caso de falha)
+            try {
+                $notificationService = new NotificationService($pdo);
+                $notificationService->sendOrderCreatedNotifications($orderId);
+            } catch (Throwable $e) {
+                error_log('[notification.order_created.error] Falha ao enviar notificação para pedido ' . $orderId . ': ' . $e->getMessage());
+            }
 
             $responseData = [
                 'success' => true,
@@ -305,15 +326,20 @@ try {
                 'status' => $gatewayResponse['status'] ?? 'pending',
             ];
 
+            // Busca dados atualizados do pedido para garantir que todos os campos estão na resposta
+            $updatedOrder = fetch('SELECT * FROM orders WHERE id = ?', [$orderId]);
+            
+            // Adiciona URL de pagamento (sempre disponível)
+            if (isset($gatewayResponse['payment_url'])) {
+                $responseData['payment_url'] = $gatewayResponse['payment_url'];
+            } elseif ($updatedOrder && isset($updatedOrder['payment_url'])) {
+                $responseData['payment_url'] = $updatedOrder['payment_url'];
+            }
+
             // Adiciona dados específicos conforme método de pagamento
             if ($validated['payment_method'] === 'pix') {
-                $responseData['pix_payload'] = $gatewayResponse['pix_payload'] ?? null;
-                $responseData['pix_qr_code_image'] = $gatewayResponse['pix_qr_code_image'] ?? null;
-                
-                // Adiciona URL de pagamento (sempre disponível, mesmo quando pix_payload é null)
-                if (isset($gatewayResponse['payment_url'])) {
-                    $responseData['payment_url'] = $gatewayResponse['payment_url'];
-                }
+                $responseData['pix_payload'] = $gatewayResponse['pix_payload'] ?? $updatedOrder['pix_payload'] ?? null;
+                $responseData['pix_qr_code_image'] = $gatewayResponse['pix_qr_code_image'] ?? $updatedOrder['pix_qr_code_image'] ?? null;
                 
                 // Ajusta mensagem conforme disponibilidade dos dados
                 if ($responseData['pix_payload'] !== null) {
@@ -322,9 +348,16 @@ try {
                     $responseData['message'] = 'Pagamento Pix gerado. Acesse a URL de pagamento para visualizar o QR code.';
                 }
             } elseif ($validated['payment_method'] === 'boleto') {
-                $responseData['boleto_url'] = $gatewayResponse['boleto_url'] ?? null;
-                $responseData['boleto_barcode'] = $gatewayResponse['boleto_barcode'] ?? null;
-                $responseData['message'] = 'Boleto gerado. Acesse o link para visualizar e pagar.';
+                $responseData['boleto_url'] = $gatewayResponse['boleto_url'] ?? $updatedOrder['boleto_url'] ?? null;
+                $responseData['boleto_barcode'] = $gatewayResponse['boleto_barcode'] ?? $updatedOrder['boleto_barcode'] ?? null;
+                $responseData['boleto_line'] = $gatewayResponse['boleto_line'] ?? $updatedOrder['boleto_line'] ?? null;
+                
+                // Ajusta mensagem conforme disponibilidade dos dados
+                if ($responseData['boleto_line'] !== null) {
+                    $responseData['message'] = 'Boleto gerado. Copie a linha digitável ou acesse o link para visualizar.';
+                } else {
+                    $responseData['message'] = 'Boleto gerado. Acesse o link para visualizar e pagar.';
+                }
             } elseif ($validated['payment_method'] === 'credit_card') {
                 if (in_array(strtolower($responseData['status']), ['paid', 'confirmed', 'received'], true)) {
                     markOrderAsPaid($orderId, [

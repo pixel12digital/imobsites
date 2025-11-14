@@ -166,14 +166,88 @@ if (!function_exists('buildTenantActivationLink')) {
 if (!function_exists('sendTenantActivationEmail')) {
     /**
      * Dispara e-mail com link de ativação.
+     * 
+     * Agora usa MailService centralizado para envio de e-mails transacionais.
      *
      * @param array<string,mixed> $context
      * @return void
      */
     function sendTenantActivationEmail(array $context): void
     {
-        // TODO: integrar com serviço de e-mail oficial. Por enquanto, apenas log.
-        error_log('[tenant_onboarding] Enviar e-mail de ativação: ' . json_encode($context));
+        require_once __DIR__ . '/MailService.php';
+
+        try {
+            global $pdo;
+            $mailService = new MailService($pdo);
+
+            $email = trim($context['email'] ?? '');
+            $name = trim($context['name'] ?? 'Cliente');
+            $activationLink = $context['activation_link'] ?? '';
+            $primaryDomain = $context['primary_domain'] ?? '';
+            $orderId = $context['order_id'] ?? null;
+
+            if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                error_log('[tenant_onboarding] E-mail inválido para envio de ativação: ' . substr($email, 0, 20));
+                return;
+            }
+
+            $subject = '[ImobSites] Ative sua conta - Acesso ao painel';
+            
+            $content = "<p>Olá, <strong>" . htmlspecialchars($name, ENT_QUOTES) . "</strong>!</p>";
+            $content .= "<p>Seu pagamento foi confirmado e sua conta está pronta para ser ativada.</p>";
+            
+            if ($primaryDomain !== '') {
+                $content .= "<p><strong>Seu domínio:</strong> " . htmlspecialchars($primaryDomain, ENT_QUOTES) . "</p>";
+            }
+            
+            $content .= "<p>Clique no botão abaixo para ativar sua conta e definir sua senha:</p>";
+            
+            if ($activationLink !== '') {
+                $content .= "<p style=\"margin: 30px 0;\">";
+                $content .= "<a href=\"" . htmlspecialchars($activationLink, ENT_QUOTES) . "\" style=\"display: inline-block; padding: 15px 30px; background-color: #F7931E; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold;\">";
+                $content .= "Ativar Minha Conta";
+                $content .= "</a>";
+                $content .= "</p>";
+                
+                $content .= "<p style=\"color: #666; font-size: 14px;\">";
+                $content .= "Ou copie e cole este link no seu navegador:<br>";
+                $content .= "<code style=\"background-color: #f5f5f5; padding: 5px 10px; border-radius: 3px; word-break: break-all;\">" . htmlspecialchars($activationLink, ENT_QUOTES) . "</code>";
+                $content .= "</p>";
+            }
+            
+            $content .= "<p style=\"color: #666; font-size: 12px; margin-top: 30px;\">";
+            $content .= "Este link é válido por 7 dias. Se não ativar sua conta neste período, entre em contato conosco.";
+            $content .= "</p>";
+
+            $htmlBody = $mailService->buildEmailTemplate(
+                'Ative sua Conta - ImobSites',
+                $content
+            );
+
+            $sent = $mailService->send(
+                $email,
+                $name,
+                $subject,
+                $htmlBody
+            );
+
+            if ($sent) {
+                error_log(sprintf(
+                    '[tenant_onboarding] E-mail de ativação enviado com sucesso | orderId=%s | email=%s',
+                    $orderId ?? 'N/A',
+                    substr($email, 0, 30)
+                ));
+            } else {
+                error_log(sprintf(
+                    '[tenant_onboarding] Falha ao enviar e-mail de ativação | orderId=%s | email=%s',
+                    $orderId ?? 'N/A',
+                    substr($email, 0, 30)
+                ));
+            }
+        } catch (Throwable $e) {
+            error_log('[tenant_onboarding] Erro ao enviar e-mail de ativação: ' . $e->getMessage());
+            // Não propaga a exceção para não quebrar o fluxo de onboarding
+        }
     }
 }
 

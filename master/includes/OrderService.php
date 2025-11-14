@@ -98,6 +98,7 @@ if (!function_exists('createOrderFromCheckout')) {
             'pix_qr_code_image' => $data['pix_qr_code_image'] ?? null,
             'boleto_url' => $data['boleto_url'] ?? null,
             'boleto_barcode' => $data['boleto_barcode'] ?? null,
+            'boleto_line' => $data['boleto_line'] ?? null,
             'asaas_customer_id' => $data['asaas_customer_id'] ?? null,
             'paid_at' => null,
             'tenant_id' => null,
@@ -185,6 +186,10 @@ if (!function_exists('updateOrderPaymentData')) {
 
         if (isset($gatewayData['boleto_barcode'])) {
             $fields['boleto_barcode'] = $gatewayData['boleto_barcode'];
+        }
+
+        if (isset($gatewayData['boleto_line'])) {
+            $fields['boleto_line'] = $gatewayData['boleto_line'];
         }
 
         if (isset($gatewayData['asaas_customer_id'])) {

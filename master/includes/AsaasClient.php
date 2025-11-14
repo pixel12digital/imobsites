@@ -269,4 +269,34 @@ if (!function_exists('asaasCancelSubscription')) {
     }
 }
 
+if (!function_exists('asaasGetPixQrCode')) {
+    /**
+     * Busca os dados do QR Code PIX para um pagamento.
+     * 
+     * Endpoint: GET /v3/payments/{id}/pixQrCode
+     *
+     * @param string $paymentId ID do pagamento no Asaas
+     * @return array<string,mixed> Retorna payload e encodedImage
+     */
+    function asaasGetPixQrCode(string $paymentId): array
+    {
+        return asaasRequest('GET', '/payments/' . $paymentId . '/pixQrCode');
+    }
+}
+
+if (!function_exists('asaasGetBoletoIdentificationField')) {
+    /**
+     * Busca a linha digitável (identificationField) de um boleto.
+     * 
+     * Endpoint: GET /v3/payments/{id}/identificationField
+     *
+     * @param string $paymentId ID do pagamento no Asaas
+     * @return array<string,mixed> Retorna identificationField
+     */
+    function asaasGetBoletoIdentificationField(string $paymentId): array
+    {
+        return asaasRequest('GET', '/payments/' . $paymentId . '/identificationField');
+    }
+}
+
 
