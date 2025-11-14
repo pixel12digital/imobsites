@@ -400,8 +400,10 @@ if (!function_exists('listOrders')) {
         $sql = "
             SELECT 
                 o.*,
+                t.id as tenant_id,
                 t.name as tenant_name,
                 t.slug as tenant_slug,
+                t.contact_email as tenant_email,
                 p.name as plan_name
             FROM orders o
             LEFT JOIN tenants t ON o.tenant_id = t.id
@@ -424,6 +426,113 @@ if (!function_exists('listOrders')) {
                 'total_pages' => $totalPages,
             ],
         ];
+    }
+}
+
+if (!function_exists('cancelOrder')) {
+    /**
+     * Marca um pedido como cancelado internamente (não cancela no Asaas).
+     * 
+     * @param int $orderId ID do pedido
+     * @param int|null $userId ID do usuário que está cancelando (opcional, para log)
+     * @param string|null $reason Motivo do cancelamento (opcional)
+     * @return bool True se cancelado com sucesso, false caso contrário
+     */
+    function cancelOrder(int $orderId, ?int $userId = null, ?string $reason = null): bool
+    {
+        // Buscar o pedido
+        $order = fetch('SELECT id, status FROM orders WHERE id = ?', [$orderId]);
+        
+        if (!$order) {
+            error_log(sprintf('[orders.cancel] Order não encontrado: ID=%d', $orderId));
+            return false;
+        }
+        
+        $currentStatus = $order['status'] ?? null;
+        
+        // Não permitir cancelar pedidos já pagos
+        if ($currentStatus === 'paid') {
+            error_log(sprintf('[orders.cancel] Tentativa de cancelar pedido pago: ID=%d | status=%s', $orderId, $currentStatus));
+            return false;
+        }
+        
+        // Se já estiver cancelado ou failed, considerar no-op
+        if (in_array($currentStatus, ['canceled', 'expired'], true)) {
+            error_log(sprintf('[orders.cancel] Pedido já está cancelado/expirado: ID=%d | status=%s', $orderId, $currentStatus));
+            return true; // Retorna true pois já está no estado desejado
+        }
+        
+        // Só permite cancelar pedidos pending ou outros status "abertos"
+        if ($currentStatus !== 'pending') {
+            error_log(sprintf('[orders.cancel] Status inválido para cancelamento: ID=%d | status=%s', $orderId, $currentStatus));
+            return false;
+        }
+        
+        // Preparar dados para atualização (campos obrigatórios)
+        // Nota: updated_at é atualizado automaticamente pelo MySQL (ON UPDATE CURRENT_TIMESTAMP)
+        $updateFields = [
+            'status' => 'canceled',
+        ];
+        
+        // Tentar atualizar com campos opcionais primeiro
+        // Se os campos canceled_at e cancel_reason não existirem, tentar sem eles
+        try {
+            // Verificar se os campos opcionais existem tentando uma query de verificação
+            global $pdo;
+            $checkColumns = $pdo->query("SHOW COLUMNS FROM orders LIKE 'canceled_at'")->fetch();
+            $hasCanceledAt = !empty($checkColumns);
+            
+            if ($hasCanceledAt) {
+                $updateFields['canceled_at'] = date('Y-m-d H:i:s');
+            }
+            
+            $checkColumns = $pdo->query("SHOW COLUMNS FROM orders LIKE 'cancel_reason'")->fetch();
+            $hasCancelReason = !empty($checkColumns);
+            
+            if ($hasCancelReason && $reason !== null && trim($reason) !== '') {
+                $updateFields['cancel_reason'] = trim($reason);
+            }
+        } catch (Exception $e) {
+            // Se der erro ao verificar colunas, continua sem os campos opcionais
+            error_log(sprintf('[orders.cancel] Aviso: não foi possível verificar colunas opcionais: %s', $e->getMessage()));
+        }
+        
+        // Atualizar o pedido
+        try {
+            $updated = update('orders', $updateFields, 'id = ?', [$orderId]);
+            
+            if ($updated) {
+                $logMessage = sprintf(
+                    '[orders.cancel] Pedido %d cancelado internamente%s%s',
+                    $orderId,
+                    $userId ? sprintf(' por user %d', $userId) : '',
+                    $reason ? sprintf(' - motivo: %s', $reason) : ''
+                );
+                error_log($logMessage);
+                return true;
+            }
+            
+            error_log(sprintf('[orders.cancel] Falha ao atualizar pedido: ID=%d | Nenhuma linha foi afetada', $orderId));
+            return false;
+        } catch (Exception $e) {
+            error_log(sprintf('[orders.cancel] Erro ao atualizar pedido: ID=%d | Erro: %s', $orderId, $e->getMessage()));
+            
+            // Se deu erro e tinha campos opcionais, tenta novamente sem eles
+            if (isset($updateFields['canceled_at']) || isset($updateFields['cancel_reason'])) {
+                error_log(sprintf('[orders.cancel] Tentando novamente sem campos opcionais: ID=%d', $orderId));
+                $basicFields = [
+                    'status' => 'canceled',
+                ];
+                $updated = update('orders', $basicFields, 'id = ?', [$orderId]);
+                
+                if ($updated) {
+                    error_log(sprintf('[orders.cancel] Pedido %d cancelado internamente (sem campos opcionais)', $orderId));
+                    return true;
+                }
+            }
+            
+            return false;
+        }
     }
 }
 

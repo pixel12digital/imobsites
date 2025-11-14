@@ -13,6 +13,84 @@ if (!isset($_SESSION['master_logged_in']) || $_SESSION['master_logged_in'] !== t
     exit;
 }
 
+// Variáveis para mensagens de feedback
+$flashMessage = '';
+$flashType = '';
+
+// Processa ação de cancelamento de pedido
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'cancel_order') {
+    $orderId = isset($_POST['order_id']) ? (int)$_POST['order_id'] : 0;
+    $cancelReason = isset($_POST['cancel_reason']) ? trim($_POST['cancel_reason']) : null;
+    
+    if ($orderId > 0) {
+        // Verificar o status atual do pedido antes de tentar cancelar
+        $currentOrder = fetch('SELECT id, status FROM orders WHERE id = ?', [$orderId]);
+        
+        if (!$currentOrder) {
+            $flashMessage = 'Pedido não encontrado.';
+            $flashType = 'danger';
+        } elseif ($currentOrder['status'] === 'paid') {
+            $flashMessage = 'Não é possível cancelar um pedido que já foi pago.';
+            $flashType = 'danger';
+        } elseif (in_array($currentOrder['status'], ['canceled', 'expired'], true)) {
+            $flashMessage = 'Este pedido já está cancelado ou expirado.';
+            $flashType = 'warning';
+        } else {
+            // Chama a função de cancelamento
+            $success = cancelOrder($orderId, null, $cancelReason);
+            
+            if ($success) {
+                $flashMessage = 'Pedido marcado como cancelado com sucesso. Esta ação não cancela a cobrança no Asaas.';
+                $flashType = 'success';
+            } else {
+                $flashMessage = 'Não foi possível cancelar este pedido. Verifique o status ou tente novamente.';
+                $flashType = 'danger';
+            }
+        }
+    } else {
+        $flashMessage = 'ID do pedido inválido.';
+        $flashType = 'danger';
+    }
+    
+    // Preserva filtros e página atual no redirect
+    $redirectParams = [];
+    if (!empty($_GET['status'])) {
+        $redirectParams['status'] = $_GET['status'];
+    }
+    if (!empty($_GET['payment_method'])) {
+        $redirectParams['payment_method'] = $_GET['payment_method'];
+    }
+    if (!empty($_GET['plan_code'])) {
+        $redirectParams['plan_code'] = $_GET['plan_code'];
+    }
+    if (!empty($_GET['q'])) {
+        $redirectParams['q'] = $_GET['q'];
+    }
+    if (!empty($_GET['page'])) {
+        $redirectParams['page'] = $_GET['page'];
+    }
+    
+    // Armazena mensagem na sessão para exibir após redirect
+    $_SESSION['flash_message'] = $flashMessage;
+    $_SESSION['flash_type'] = $flashType;
+    
+    $redirectUrl = 'pedidos.php';
+    if (!empty($redirectParams)) {
+        $redirectUrl .= '?' . http_build_query($redirectParams);
+    }
+    
+    header('Location: ' . $redirectUrl);
+    exit;
+}
+
+// Recupera mensagem flash da sessão (se houver)
+if (isset($_SESSION['flash_message'])) {
+    $flashMessage = $_SESSION['flash_message'];
+    $flashType = $_SESSION['flash_type'] ?? 'info';
+    unset($_SESSION['flash_message']);
+    unset($_SESSION['flash_type']);
+}
+
 // Processa filtros do GET
 $filters = [];
 if (!empty($_GET['status']) && in_array($_GET['status'], ['pending', 'paid', 'canceled', 'expired'], true)) {
@@ -54,19 +132,19 @@ function formatPaymentMethod(?string $method): string
     return $labels[$method] ?? ucfirst($method);
 }
 
-// Helper para formatar status com badge
+// Helper para formatar status com badge e tooltip
 function formatOrderStatus(?string $status): string
 {
     if (!$status) {
-        return '<span class="badge text-bg-secondary">—</span>';
+        return '<span class="badge text-bg-secondary" title="Status não definido">—</span>';
     }
     $badges = [
-        'pending' => '<span class="badge text-bg-warning">Pendente</span>',
-        'paid' => '<span class="badge text-bg-success">Pago</span>',
-        'canceled' => '<span class="badge text-bg-danger">Cancelado</span>',
-        'expired' => '<span class="badge text-bg-secondary">Expirado</span>',
+        'pending' => '<span class="badge" style="background-color: #ff9800; color: #fff;" title="Aguardando confirmação do pagamento no Asaas.">Pendente</span>',
+        'paid' => '<span class="badge text-bg-success" title="Pagamento confirmado pelo Asaas. Tenant deve estar criado.">Pago</span>',
+        'canceled' => '<span class="badge text-bg-danger" title="Pedido cancelado internamente. Esta ação não cancela a cobrança no Asaas.">Cancelado</span>',
+        'expired' => '<span class="badge text-bg-secondary" title="Pagamento expirado no Asaas.">Expirado</span>',
     ];
-    return $badges[$status] ?? '<span class="badge text-bg-secondary">' . htmlspecialchars($status) . '</span>';
+    return $badges[$status] ?? '<span class="badge text-bg-secondary" title="Status: ' . htmlspecialchars($status) . '">' . htmlspecialchars($status) . '</span>';
 }
 
 include 'includes/header.php';
@@ -78,6 +156,14 @@ include 'includes/header.php';
         <p class="page-subtitle mb-0">Acompanhe os pedidos gerados pelo checkout e o status dos pagamentos.</p>
     </div>
 </div>
+
+<?php if (!empty($flashMessage)): ?>
+    <div class="alert alert-<?php echo htmlspecialchars($flashType); ?> alert-dismissible fade show" role="alert">
+        <i class="fas fa-<?php echo $flashType === 'success' ? 'check-circle' : 'exclamation-circle'; ?> me-2"></i>
+        <?php echo htmlspecialchars($flashMessage); ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+<?php endif; ?>
 
 <!-- Filtros -->
 <div class="card mb-4 shadow-sm">
@@ -177,18 +263,35 @@ include 'includes/header.php';
                                 <strong>#<?php echo htmlspecialchars((string)$order['id']); ?></strong>
                             </td>
                             <td>
-                                <?php if (!empty($order['tenant_id']) && !empty($order['tenant_name'])): ?>
-                                    <a href="tenant.php?id=<?php echo (int)$order['tenant_id']; ?>" class="text-decoration-none">
-                                        <strong><?php echo htmlspecialchars($order['tenant_name']); ?></strong>
-                                    </a>
-                                    <div class="text-muted small"><?php echo htmlspecialchars($order['customer_email'] ?? ''); ?></div>
-                                <?php else: ?>
-                                    <div>
-                                        <strong><?php echo htmlspecialchars($order['customer_name'] ?? '—'); ?></strong>
-                                        <div class="text-muted small"><?php echo htmlspecialchars($order['customer_email'] ?? ''); ?></div>
+                                <?php
+                                // Priorizar dados do tenant quando disponível
+                                $clientName = !empty($order['tenant_name']) ? $order['tenant_name'] : ($order['customer_name'] ?? '—');
+                                $clientEmail = !empty($order['tenant_email']) ? $order['tenant_email'] : ($order['customer_email'] ?? '');
+                                $hasTenant = !empty($order['tenant_id']);
+                                ?>
+                                <div>
+                                    <?php if ($hasTenant && !empty($order['tenant_name'])): ?>
+                                        <a href="tenant.php?id=<?php echo (int)$order['tenant_id']; ?>" class="text-decoration-none">
+                                            <strong><?php echo htmlspecialchars($clientName); ?></strong>
+                                        </a>
+                                    <?php else: ?>
+                                        <strong><?php echo htmlspecialchars($clientName); ?></strong>
+                                    <?php endif; ?>
+                                    <?php if (!empty($clientEmail)): ?>
+                                        <div class="text-muted small"><?php echo htmlspecialchars($clientEmail); ?></div>
+                                    <?php endif; ?>
+                                    <div class="mt-1">
+                                        <?php if ($hasTenant): ?>
+                                            <span class="badge text-bg-success" style="font-size: 0.75rem;">
+                                                <i class="fas fa-check me-1"></i>Conta criada (tenant #<?php echo (int)$order['tenant_id']; ?>)
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="badge text-bg-warning" style="font-size: 0.75rem; background-color: #ff9800 !important;">
+                                                <i class="fas fa-minus me-1"></i>Conta ainda não criada
+                                            </span>
+                                        <?php endif; ?>
                                     </div>
-                                    <small class="text-muted d-block">— (ainda não vinculado)</small>
-                                <?php endif; ?>
+                                </div>
                             </td>
                             <td>
                                 <?php if (!empty($order['plan_name'])): ?>
@@ -214,16 +317,35 @@ include 'includes/header.php';
                                 </small>
                             </td>
                             <td class="text-end">
-                                <div class="btn-group">
+                                <div class="btn-group" role="group">
+                                    <?php 
+                                    $orderStatus = $order['status'] ?? null;
+                                    $isPending = $orderStatus === 'pending';
+                                    ?>
+                                    <?php if ($isPending): ?>
+                                        <form method="POST" onsubmit="return confirm('Tem certeza que deseja marcar este pedido como cancelado?\\n\\nEsta ação NÃO cancela a cobrança no Asaas. É apenas um controle interno.');" style="display:inline;">
+                                            <input type="hidden" name="action" value="cancel_order">
+                                            <input type="hidden" name="order_id" value="<?php echo (int)$order['id']; ?>">
+                                            <input type="hidden" name="cancel_reason" value="Cancelado manualmente pelo painel">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Marcar pedido como cancelado (não cancela no Asaas)">
+                                                <i class="fas fa-times me-1"></i>Cancelar
+                                            </button>
+                                        </form>
+                                    <?php endif; ?>
                                     <?php if (!empty($order['tenant_id'])): ?>
                                         <a href="tenant.php?id=<?php echo (int)$order['tenant_id']; ?>" class="btn btn-sm btn-outline-primary" title="Configurar cliente">
-                                            <i class="fas fa-gear"></i>
+                                            <i class="fas fa-gear me-1"></i>Configurar
                                         </a>
                                         <a href="../admin/login.php?tenant=<?php echo urlencode($order['tenant_slug'] ?? ''); ?>" class="btn btn-sm btn-outline-secondary" title="Acessar como cliente" target="_blank">
-                                            <i class="fas fa-user-check"></i>
+                                            <i class="fas fa-user-check me-1"></i>Acessar
                                         </a>
                                     <?php endif; ?>
                                     <?php if (!empty($order['payment_url'])): ?>
+                                        <button type="button" class="btn btn-sm btn-outline-info btn-copy-payment-url" 
+                                                data-payment-url="<?php echo htmlspecialchars($order['payment_url']); ?>" 
+                                                title="Copiar link de pagamento">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
                                         <a href="<?php echo htmlspecialchars($order['payment_url']); ?>" class="btn btn-sm btn-outline-info" title="Ver no Asaas" target="_blank">
                                             <i class="fas fa-external-link-alt"></i>
                                         </a>
@@ -297,6 +419,90 @@ include 'includes/header.php';
         <?php endif; ?>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Função para copiar texto para a área de transferência
+    function copyToClipboard(text) {
+        // Tenta usar a API moderna do clipboard
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            return navigator.clipboard.writeText(text).then(function() {
+                return true;
+            }).catch(function() {
+                return false;
+            });
+        }
+        
+        // Fallback para navegadores mais antigos
+        try {
+            var textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            var successful = document.execCommand('copy');
+            document.body.removeChild(textArea);
+            return Promise.resolve(successful);
+        } catch (err) {
+            return Promise.resolve(false);
+        }
+    }
+    
+    // Função para mostrar feedback visual
+    function showCopyFeedback(button, success) {
+        var originalHTML = button.innerHTML;
+        var originalTitle = button.getAttribute('title');
+        
+        if (success) {
+            button.innerHTML = '<i class="fas fa-check"></i>';
+            button.setAttribute('title', 'Link copiado!');
+            button.classList.remove('btn-outline-info');
+            button.classList.add('btn-success');
+            
+            setTimeout(function() {
+                button.innerHTML = originalHTML;
+                button.setAttribute('title', originalTitle);
+                button.classList.remove('btn-success');
+                button.classList.add('btn-outline-info');
+            }, 2000);
+        } else {
+            button.innerHTML = '<i class="fas fa-times"></i>';
+            button.setAttribute('title', 'Erro ao copiar');
+            button.classList.remove('btn-outline-info');
+            button.classList.add('btn-danger');
+            
+            setTimeout(function() {
+                button.innerHTML = originalHTML;
+                button.setAttribute('title', originalTitle);
+                button.classList.remove('btn-danger');
+                button.classList.add('btn-outline-info');
+            }, 2000);
+        }
+    }
+    
+    // Adiciona event listeners aos botões de copiar
+    var copyButtons = document.querySelectorAll('.btn-copy-payment-url');
+    copyButtons.forEach(function(button) {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            var paymentUrl = this.getAttribute('data-payment-url');
+            if (!paymentUrl) {
+                showCopyFeedback(this, false);
+                return;
+            }
+            
+            copyToClipboard(paymentUrl).then(function(success) {
+                showCopyFeedback(button, success);
+            });
+        });
+    });
+});
+</script>
 
 <?php include 'includes/footer.php'; ?>
 
